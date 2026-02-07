@@ -3,337 +3,222 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Murmuration — Intelligence collective en temps réel</title>
+  <title>Labo — Kodra Conseil</title>
+  <meta name="description" content="Le laboratoire de Kodra Conseil. Projets web, prototypes et expérimentations." />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0B1529; overflow: hidden; font-family: system-ui, sans-serif; }
-    canvas { display: block; width: 100vw; height: 100vh; }
-
-    .controls {
-      position: fixed; bottom: 24px; right: 24px; z-index: 10;
-      display: flex; gap: 8px; align-items: center;
+    body {
+      background: #0B1529; color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
     }
-    .btn {
-      width: 36px; height: 36px; border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.1); background: rgba(11,21,41,0.8);
-      color: #9ca3af; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; backdrop-filter: blur(8px);
+    a { color: inherit; text-decoration: none; }
+
+    /* Grid background */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    header {
+      position: relative; z-index: 1;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 20px 24px;
+    }
+    .header-inner {
+      max-width: 800px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-area img { height: 24px; width: auto; opacity: 0.7; }
+    .divider { width: 1px; height: 20px; background: rgba(255,255,255,0.1); }
+    .badge { font-family: monospace; font-size: 13px; color: #6b7280; letter-spacing: 0.05em; }
+    .back-link {
+      font-family: monospace; font-size: 12px; color: #6b7280;
+      display: flex; align-items: center; gap: 6px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #F97316; }
+    .back-link svg { width: 12px; height: 12px; }
+
+    main {
+      position: relative; z-index: 1;
+      padding: 64px 24px; flex: 1;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+
+    .counter {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+      border-radius: 999px; padding: 4px 12px; margin-bottom: 12px;
+    }
+    .counter-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #F97316; animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .counter-text { font-family: monospace; font-size: 12px; color: #9ca3af; }
+
+    h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); font-weight: 700; margin-bottom: 12px; }
+    .subtitle { font-size: 1.1rem; color: #9ca3af; max-width: 500px; line-height: 1.6; }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px; margin-top: 48px;
+    }
+
+    .card {
+      border: 1px solid rgba(255,255,255,0.05);
+      background: #111D35; border-radius: 16px; padding: 24px;
+      transition: all 0.2s; display: flex; flex-direction: column;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .status {
+      display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 999px; padding: 3px 10px; font-family: monospace; font-size: 12px;
+    }
+    .status-live { background: rgba(52,211,153,0.1); color: #34d399; }
+    .status-live .status-dot { background: #34d399; }
+    .status-dev { background: rgba(251,191,36,0.1); color: #fbbf24; }
+    .status-dev .status-dot { background: #fbbf24; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .card-arrow {
+      width: 16px; height: 16px; color: #4b5563;
       transition: all 0.2s;
     }
-    .btn:hover { border-color: rgba(249,115,22,0.3); color: #F97316; }
-    .btn.active { border-color: rgba(249,115,22,0.3); color: #F97316; }
-    .btn svg { width: 18px; height: 18px; }
-    .ping {
-      width: 12px; height: 12px; position: relative;
-    }
-    .ping::before {
-      content: ''; position: absolute; inset: 0; border-radius: 50%;
-      background: #F97316; animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
-    }
-    .ping::after {
-      content: ''; position: absolute; inset: 1px; border-radius: 50%;
-      background: #F97316;
-    }
-    @keyframes ping {
-      75%, 100% { transform: scale(2); opacity: 0; }
+    .card:hover .card-arrow { transform: translateX(4px); color: #F97316; }
+
+    .card h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; transition: color 0.2s; }
+    .card:hover h2 { color: #F97316; }
+    .card p { font-size: 0.875rem; color: #9ca3af; line-height: 1.6; margin-bottom: 16px; flex: 1; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-family: monospace; font-size: 11px; color: #6b7280;
+      border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);
+      border-radius: 6px; padding: 2px 8px;
     }
 
-    .popup {
-      position: absolute; bottom: calc(100% + 12px); right: 0; width: 280px;
-      background: rgba(11,21,41,0.95); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; padding: 16px; color: #d1d5db; font-size: 14px;
-      line-height: 1.6; backdrop-filter: blur(12px); cursor: pointer;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    .card-empty {
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 24px; min-height: 200px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .popup::after {
-      content: ''; position: absolute; bottom: -6px; right: 24px;
-      width: 12px; height: 12px; background: rgba(11,21,41,0.95);
-      border-right: 1px solid rgba(255,255,255,0.1);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      transform: rotate(45deg);
+    .card-empty-inner { text-align: center; }
+    .plus-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
     }
-    .popup h3 { color: #F97316; font-size: 14px; margin-bottom: 8px; }
-    .popup .hint { color: #6b7280; font-size: 12px; margin-top: 8px; }
-    .hidden { display: none; }
+    .plus-icon svg { width: 20px; height: 20px; color: #4b5563; }
+    .card-empty p { font-size: 0.875rem; color: #4b5563; }
 
-    .title {
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      text-align: center; z-index: 5; pointer-events: none;
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 20px 24px;
     }
-    .title h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800;
-      color: white; letter-spacing: -0.02em; line-height: 1.2;
+    .footer-inner {
+      max-width: 800px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
     }
-    .title h1 span { color: #F97316; }
-    .title p {
-      margin-top: 16px; font-size: clamp(1rem, 2vw, 1.25rem);
-      color: #9ca3af; max-width: 600px;
-    }
+    .footer-inner p, .footer-links { font-family: monospace; font-size: 12px; color: #4b5563; }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { transition: color 0.2s; }
+    .footer-links a:hover { color: #F97316; }
+    .footer-sep { color: rgba(255,255,255,0.1); }
   </style>
 </head>
 <body>
 
-<div class="title">
-  <h1>Murmuration<br><span>Intelligence collective</span></h1>
-  <p>Passez votre souris pour réveiller les particules.</p>
-</div>
+<div class="bg-grid"></div>
 
-<canvas id="canvas"></canvas>
-
-<div class="controls">
-  <div id="popup" class="popup hidden" onclick="this.classList.add('hidden')">
-    <h3>Murmuration</h3>
-    <p>
-      Cette animation s'inspire de la murmuration des étourneaux : des milliers
-      d'oiseaux qui se coordonnent sans chef d'orchestre, créant des formes
-      collectives spectaculaires.
-    </p>
-    <p style="margin-top:8px">
-      C'est exactement ce que produit une bonne facilitation : quand les bonnes
-      conditions sont réunies, l'intelligence collective émerge naturellement.
-    </p>
-    <p class="hint">
-      Passez votre souris pour réveiller les particules. Activez le micro pour
-      les voir réagir à votre voix.
-    </p>
+<header>
+  <div class="header-inner">
+    <div class="logo-area">
+      <img src="https://kodra.ca/logo.png" alt="Kodra Conseil" />
+      <div class="divider"></div>
+      <span class="badge">labo</span>
+    </div>
+    <a href="https://kodra.ca" target="_blank" rel="noopener" class="back-link">
+      kodra.ca
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+      </svg>
+    </a>
   </div>
+</header>
 
-  <button class="btn" id="toggleVisibility" title="Masquer / Afficher">
-    <svg id="iconEyeOff" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
-    </svg>
-    <svg id="iconEyeOn" class="hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-    </svg>
-  </button>
+<main>
+  <div class="container">
+    <div>
+      <div class="counter">
+        <span class="counter-dot"></span>
+        <span class="counter-text">1 projet</span>
+      </div>
+      <h1>Le labo de Kodra</h1>
+      <p class="subtitle">
+        Nos projets web, prototypes et exp&eacute;rimentations. Un espace pour
+        construire, tester et it&eacute;rer.
+      </p>
+    </div>
 
-  <button class="btn" id="toggleInfo" title="Info">?</button>
+    <div class="grid">
+      <a href="/murmuration/" class="card">
+        <div class="card-header">
+          <div class="status status-live">
+            <span class="status-dot"></span>
+            En ligne
+          </div>
+          <svg class="card-arrow" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"/>
+          </svg>
+        </div>
+        <h2>Murmuration</h2>
+        <p>
+          Animation interactive inspir&eacute;e de la murmuration des &eacute;tourneaux.
+          R&eacute;active &agrave; la souris et au microphone &mdash; une m&eacute;taphore
+          visuelle de l'intelligence collective.
+        </p>
+        <div class="tags">
+          <span class="tag">Canvas</span>
+          <span class="tag">Boids</span>
+          <span class="tag">Web Audio API</span>
+          <span class="tag">Open source</span>
+        </div>
+      </a>
 
-  <button class="btn" id="toggleMic" title="Activer le micro">
-    <svg id="iconMic" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/>
-    </svg>
-    <div id="iconPing" class="ping hidden"></div>
-  </button>
-</div>
+      <div class="card-empty">
+        <div class="card-empty-inner">
+          <div class="plus-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+          </div>
+          <p>Prochain projet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
 
-<script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+<footer>
+  <div class="footer-inner">
+    <p>&copy; 2026 Kodra Conseil, SENC</p>
+    <div class="footer-links">
+      <a href="https://kodra.ca">www.kodra.ca</a>
+      <span class="footer-sep">|</span>
+      <a href="mailto:seb@kodra.ca">seb@kodra.ca</a>
+    </div>
+  </div>
+</footer>
 
-const NUM_BOIDS = 300;
-const BASE_MAX_SPEED = 2.5;
-const VISUAL_RANGE = 75;
-const SEPARATION_DIST = 20;
-const BASE_COHESION = 0.003;
-const ALIGNMENT_FACTOR = 0.04;
-const SEPARATION_FACTOR = 0.05;
-const EDGE_MARGIN = 100;
-const EDGE_TURN = 0.3;
-const MOUSE_RADIUS = 300;
-const MOUSE_FORCE = 4;
-const ENERGY_SPREAD_RANGE = 180;
-
-let boids = [];
-let mouse = { x: -1000, y: -1000, active: false };
-let volume = 0, smoothVolume = 0;
-let audioCtx, analyser, dataArray, stream;
-let micActive = false;
-let isHidden = false;
-
-function resize() {
-  const dpr = devicePixelRatio || 1;
-  canvas.width = innerWidth * dpr;
-  canvas.height = innerHeight * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-
-function init() {
-  resize();
-  boids = [];
-  for (let i = 0; i < NUM_BOIDS; i++) {
-    boids.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, vx: 0, vy: 0, energy: 0 });
-  }
-}
-
-function sampleVolume() {
-  if (!analyser) { smoothVolume *= 0.9; volume = smoothVolume; return; }
-  analyser.getByteFrequencyData(dataArray);
-  let sum = 0;
-  for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-  const normalized = Math.min(sum / dataArray.length / 100, 1);
-  smoothVolume += (normalized - smoothVolume) * 0.15;
-  volume = smoothVolume;
-}
-
-function update() {
-  sampleVolume();
-  const vol = volume;
-  const w = innerWidth, h = innerHeight, cx = w / 2, cy = h / 2;
-  const maxSpeed = BASE_MAX_SPEED + vol * 4;
-  const cohesion = BASE_COHESION * (1 - vol * 0.8);
-  const separationDist = SEPARATION_DIST + vol * 30;
-  const pulseForce = vol * vol * 0.8;
-
-  for (let i = 0; i < boids.length; i++) {
-    const b = boids[i];
-
-    if (mouse.active) {
-      const dxM = b.x - mouse.x, dyM = b.y - mouse.y;
-      const distM = Math.sqrt(dxM * dxM + dyM * dyM);
-      if (distM < MOUSE_RADIUS) {
-        b.energy = Math.min(b.energy + 0.35, 1);
-        const force = MOUSE_FORCE * (1 - distM / MOUSE_RADIUS);
-        b.vx += (dxM / (distM || 1)) * force;
-        b.vy += (dyM / (distM || 1)) * force;
-      }
-    }
-
-    if (b.energy > 0.1) {
-      for (let j = 0; j < boids.length; j++) {
-        if (i === j) continue;
-        const o = boids[j];
-        if (o.energy >= b.energy) continue;
-        const dx = o.x - b.x, dy = o.y - b.y;
-        if (Math.sqrt(dx * dx + dy * dy) < ENERGY_SPREAD_RANGE) {
-          o.energy = Math.min(o.energy + b.energy * 0.03, 1);
-        }
-      }
-    }
-
-    if (b.energy < 0.01) continue;
-
-    let cohX = 0, cohY = 0, cohC = 0, aliVx = 0, aliVy = 0, aliC = 0, sepX = 0, sepY = 0;
-    for (let j = 0; j < boids.length; j++) {
-      if (i === j) continue;
-      const o = boids[j], dx = o.x - b.x, dy = o.y - b.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < VISUAL_RANGE) {
-        cohX += o.x; cohY += o.y; cohC++;
-        aliVx += o.vx; aliVy += o.vy; aliC++;
-        if (dist < separationDist) { sepX -= dx; sepY -= dy; }
-      }
-    }
-
-    const e = b.energy;
-    if (cohC > 0) { b.vx += (cohX / cohC - b.x) * cohesion * e; b.vy += (cohY / cohC - b.y) * cohesion * e; }
-    if (aliC > 0) { b.vx += (aliVx / aliC - b.vx) * ALIGNMENT_FACTOR * e; b.vy += (aliVy / aliC - b.vy) * ALIGNMENT_FACTOR * e; }
-    b.vx += sepX * SEPARATION_FACTOR * e;
-    b.vy += sepY * SEPARATION_FACTOR * e;
-
-    if (pulseForce > 0.01) {
-      const dxC = b.x - cx, dyC = b.y - cy, distC = Math.sqrt(dxC * dxC + dyC * dyC) || 1;
-      b.vx += (dxC / distC) * pulseForce * e;
-      b.vy += (dyC / distC) * pulseForce * e;
-    }
-
-    if (b.x < EDGE_MARGIN) b.vx += EDGE_TURN * e;
-    if (b.x > w - EDGE_MARGIN) b.vx -= EDGE_TURN * e;
-    if (b.y < EDGE_MARGIN) b.vy += EDGE_TURN * e;
-    if (b.y > h - EDGE_MARGIN) b.vy -= EDGE_TURN * e;
-
-    const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-    const effMax = maxSpeed * e;
-    if (spd > effMax) { b.vx = (b.vx / spd) * effMax; b.vy = (b.vy / spd) * effMax; }
-    if (e > 0.3 && spd < 0.5 * e && spd > 0) { b.vx = (b.vx / spd) * 0.5 * e; b.vy = (b.vy / spd) * 0.5 * e; }
-
-    b.x += b.vx;
-    b.y += b.vy;
-  }
-}
-
-function draw() {
-  const vol = volume;
-  const maxSpeed = BASE_MAX_SPEED + vol * 4;
-  ctx.clearRect(0, 0, innerWidth, innerHeight);
-
-  if (vol > 0.05) {
-    const grd = ctx.createRadialGradient(innerWidth / 2, innerHeight / 2, 0, innerWidth / 2, innerHeight / 2, innerWidth * 0.5);
-    grd.addColorStop(0, `rgba(249,115,22,${vol * 0.08})`);
-    grd.addColorStop(1, 'transparent');
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, innerWidth, innerHeight);
-  }
-
-  for (const b of boids) {
-    const e = b.energy, spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-    if (e < 0.01) {
-      ctx.fillStyle = 'rgba(249,115,22,0.15)';
-      ctx.beginPath(); ctx.arc(b.x, b.y, 1.5, 0, Math.PI * 2); ctx.fill();
-      continue;
-    }
-    const alpha = Math.min(0.15 + e * (0.3 + (spd / maxSpeed) * 0.4) + vol * 0.3, 1);
-    const radius = 1.5 + e * (1.5 + vol * 1.5);
-    ctx.fillStyle = `rgba(249,115,22,${alpha})`;
-    ctx.beginPath(); ctx.arc(b.x, b.y, radius, 0, Math.PI * 2); ctx.fill();
-  }
-
-  const lineAlpha = 0.04 + vol * 0.08, lineRange = 40 + vol * 20;
-  ctx.strokeStyle = `rgba(249,115,22,${lineAlpha})`;
-  ctx.lineWidth = 0.5 + vol;
-  for (let i = 0; i < boids.length; i++) {
-    if (boids[i].energy < 0.2) continue;
-    for (let j = i + 1; j < boids.length; j++) {
-      if (boids[j].energy < 0.2) continue;
-      const dx = boids[i].x - boids[j].x, dy = boids[i].y - boids[j].y;
-      if (Math.sqrt(dx * dx + dy * dy) < lineRange) {
-        ctx.beginPath(); ctx.moveTo(boids[i].x, boids[i].y); ctx.lineTo(boids[j].x, boids[j].y); ctx.stroke();
-      }
-    }
-  }
-}
-
-function loop() { update(); draw(); requestAnimationFrame(loop); }
-
-// Events
-addEventListener('mousemove', e => { mouse = { x: e.clientX, y: e.clientY, active: true }; });
-addEventListener('mouseleave', () => { mouse.active = false; });
-addEventListener('resize', resize);
-
-// Controls
-document.getElementById('toggleVisibility').onclick = () => {
-  isHidden = !isHidden;
-  canvas.style.opacity = isHidden ? '0' : '1';
-  canvas.style.transition = 'opacity 0.5s';
-  document.getElementById('iconEyeOff').classList.toggle('hidden', isHidden);
-  document.getElementById('iconEyeOn').classList.toggle('hidden', !isHidden);
-};
-
-document.getElementById('toggleInfo').onclick = () => {
-  document.getElementById('popup').classList.toggle('hidden');
-};
-
-document.getElementById('toggleMic').onclick = async () => {
-  if (micActive) {
-    stream.getTracks().forEach(t => t.stop());
-    audioCtx.close();
-    audioCtx = analyser = stream = null;
-    smoothVolume = volume = 0;
-    micActive = false;
-    document.getElementById('iconMic').classList.remove('hidden');
-    document.getElementById('iconPing').classList.add('hidden');
-    document.getElementById('toggleMic').classList.remove('active');
-    return;
-  }
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioCtx = new AudioContext();
-    const src = audioCtx.createMediaStreamSource(stream);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.8;
-    dataArray = new Uint8Array(128);
-    src.connect(analyser);
-    micActive = true;
-    document.getElementById('iconMic').classList.add('hidden');
-    document.getElementById('iconPing').classList.remove('hidden');
-    document.getElementById('toggleMic').classList.add('active');
-  } catch(e) {}
-};
-
-init();
-loop();
-</script>
 </body>
 </html>
