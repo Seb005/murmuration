@@ -11,7 +11,6 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.LOOPS_API_KEY;
   if (!apiKey) {
-    console.log("LOOPS_API_KEY is missing. Available env keys:", Object.keys(process.env).filter(k => k.startsWith("LOOPS")));
     return res.status(500).json({ error: "Configuration serveur manquante." });
   }
 
