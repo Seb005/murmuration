@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Optimisation fiscale 2025 — Labo Kodra</title>
+  <meta name="description" content="Outil interactif d'optimisation fiscale pour le Qu&eacute;bec et le Canada. Calculez vos imp&ocirc;ts, optimisez vos REER et CELIAPP." />
+  <style>
+    /* === Reset & Base === */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0B1529; color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* === Header === */
+    header {
+      position: relative; z-index: 1;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 20px 24px;
+    }
+    .header-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-area img { height: 24px; width: auto; opacity: 0.7; }
+    .divider { width: 1px; height: 20px; background: rgba(255,255,255,0.1); }
+    .badge { font-family: monospace; font-size: 13px; color: #6b7280; }
+    .back-link {
+      font-family: monospace; font-size: 12px; color: #6b7280;
+      display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .back-link:hover { color: #F97316; }
+    .back-link svg { width: 12px; height: 12px; }
+
+    /* === Main === */
+    main {
+      position: relative; z-index: 1;
+      padding: 40px 24px 64px; flex: 1;
+    }
+    .page-container { max-width: 960px; margin: 0 auto; }
+
+    .page-title {
+      font-size: clamp(1.5rem, 3.5vw, 2rem); font-weight: 700; margin-bottom: 8px;
+    }
+    .page-title span { color: #F97316; }
+    .page-subtitle { font-size: 0.95rem; color: #9ca3af; margin-bottom: 32px; line-height: 1.5; }
+
+    /* === Two Column Layout === */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* === Collapsible Sections === */
+    .section {
+      background: #111D35;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .section-header:hover { background: rgba(255,255,255,0.02); }
+    .section-header h2 {
+      font-size: 0.95rem; font-weight: 600;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .section-chevron {
+      width: 16px; height: 16px; color: #6b7280;
+      transition: transform 0.3s;
+    }
+    .section.open .section-chevron { transform: rotate(180deg); }
+    .section-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .section.open .section-body {
+      max-height: 800px;
+    }
+    .section-content {
+      padding: 0 20px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .section-content.single-col {
+      grid-template-columns: 1fr;
+    }
+
+    /* === Input Fields === */
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label {
+      font-size: 12px; color: #9ca3af; font-family: monospace;
+    }
+    .input-wrap {
+      position: relative; display: flex; align-items: center;
+    }
+    .input-wrap input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 10px 28px 10px 12px;
+      color: #fff;
+      font-family: monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-wrap input:focus { border-color: #F97316; }
+    .input-wrap .suffix {
+      position: absolute; right: 10px;
+      font-family: monospace; font-size: 12px; color: #6b7280;
+      pointer-events: none;
+    }
+
+    /* === Slider === */
+    .slider-group {
+      grid-column: 1 / -1;
+    }
+    .slider-row {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      background: #F97316;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #0B1529;
+    }
+    .slider-row input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px;
+      background: #F97316;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #0B1529;
+    }
+    .slider-value {
+      font-family: monospace; font-size: 14px;
+      min-width: 80px; text-align: right;
+      color: #F97316; font-weight: 600;
+    }
+    .slider-limits {
+      display: flex; justify-content: space-between;
+      font-family: monospace; font-size: 11px; color: #6b7280;
+      margin-top: 4px;
+    }
+
+    /* === Info Box === */
+    .info-box {
+      grid-column: 1 / -1;
+      background: rgba(249,115,22,0.05);
+      border: 1px solid rgba(249,115,22,0.15);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #d1d5db;
+      line-height: 1.5;
+    }
+    .info-box strong { color: #F97316; }
+
+    /* === Results Panel === */
+    .results-panel {
+      position: sticky;
+      top: 24px;
+    }
+    .results-card {
+      background: #111D35;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+    .results-card h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      font-family: monospace;
+    }
+
+    .result-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .result-row .label { color: #9ca3af; }
+    .result-row .value { font-family: monospace; font-weight: 500; }
+    .result-row.highlight .label { color: #fff; font-weight: 600; }
+    .result-row.highlight .value { color: #F97316; font-weight: 700; font-size: 15px; }
+    .result-row.sub { padding-left: 12px; }
+    .result-row.sub .label { font-size: 12px; }
+    .result-row.sub .value { font-size: 12px; }
+    .result-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin: 8px 0;
+    }
+
+    /* === Taux badges === */
+    .rate-badges {
+      display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .rate-badge {
+      font-family: monospace; font-size: 12px;
+      padding: 4px 10px; border-radius: 6px;
+    }
+    .rate-badge.effective {
+      background: rgba(52,211,153,0.1); color: #34d399;
+    }
+    .rate-badge.marginal {
+      background: rgba(249,115,22,0.1); color: #F97316;
+    }
+
+    /* === Comparison Bars === */
+    .compare-group { margin-bottom: 12px; }
+    .compare-label {
+      font-size: 12px; color: #9ca3af; margin-bottom: 4px;
+      font-family: monospace;
+    }
+    .compare-bar-wrap {
+      height: 24px; background: rgba(255,255,255,0.05);
+      border-radius: 6px; overflow: hidden;
+      position: relative; margin-bottom: 2px;
+    }
+    .compare-bar {
+      height: 100%; border-radius: 6px;
+      transition: width 0.5s ease;
+      display: flex; align-items: center;
+      padding: 0 8px;
+      font-family: monospace; font-size: 11px;
+      white-space: nowrap;
+    }
+    .compare-bar.before { background: rgba(239,68,68,0.3); color: #fca5a5; }
+    .compare-bar.after { background: rgba(52,211,153,0.3); color: #6ee7b7; }
+
+    /* === Suggestions === */
+    .suggestion {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #d1d5db;
+    }
+    .suggestion .stag {
+      display: inline-block;
+      font-family: monospace; font-size: 10px;
+      padding: 2px 6px; border-radius: 4px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stag.reer { background: rgba(249,115,22,0.1); color: #F97316; }
+    .stag.celiapp { background: rgba(96,165,250,0.1); color: #60a5fa; }
+    .stag.celi { background: rgba(52,211,153,0.1); color: #34d399; }
+    .stag.reee { background: rgba(167,139,250,0.1); color: #a78bfa; }
+    .stag.don { background: rgba(251,191,36,0.1); color: #fbbf24; }
+    .stag.palier { background: rgba(244,114,182,0.1); color: #f472b6; }
+    .suggestion .amount {
+      font-family: monospace; font-weight: 600; color: #F97316;
+    }
+
+    /* === Disclaimer === */
+    .disclaimer {
+      text-align: center;
+      font-size: 12px;
+      color: #4b5563;
+      margin-top: 32px;
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* === Footer === */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 20px 24px;
+    }
+    .footer-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .footer-inner p, .footer-links { font-family: monospace; font-size: 12px; color: #4b5563; }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { transition: color 0.2s; }
+    .footer-links a:hover { color: #F97316; }
+
+    /* === Responsive === */
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .results-panel {
+        position: static;
+      }
+      .section-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* === Print === */
+    @media print {
+      body { background: #fff; color: #000; }
+      .bg-grid, header, .inputs-col, .disclaimer, footer { display: none; }
+      .layout { grid-template-columns: 1fr; }
+      .results-panel { position: static; }
+      .results-card {
+        background: #fff; border: 1px solid #ddd;
+        break-inside: avoid;
+      }
+      .results-card h3 { color: #333; }
+      .result-row .label { color: #555; }
+      .result-row .value { color: #000; }
+      .result-row.highlight .value { color: #c2410c; }
+      .compare-bar-wrap { background: #eee; }
+      .suggestion { background: #f9f9f9; border-color: #ddd; color: #333; }
+      .rate-badge.effective { background: #e6f9f0; color: #065f46; }
+      .rate-badge.marginal { background: #fff7ed; color: #9a3412; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-area">
+      <img src="https://kodra.ca/logo.png" alt="Kodra Conseil" />
+      <div class="divider"></div>
+      <span class="badge">labo</span>
+    </div>
+    <a href="/" class="back-link">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      Retour au labo
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="page-container">
+    <h1 class="page-title">Optimisation <span>fiscale 2025</span></h1>
+    <p class="page-subtitle">
+      Calculez vos imp&ocirc;ts f&eacute;d&eacute;ral et Qu&eacute;bec, optimisez vos cotisations REER
+      et CELIAPP, et visualisez l'impact en temps r&eacute;el.
+    </p>
+
+    <div class="layout">
+      <!-- LEFT: Inputs -->
+      <div class="inputs-col">
+
+        <!-- 1. Revenus -->
+        <div class="section open" id="sec-revenus">
+          <div class="section-header" onclick="toggleSection('sec-revenus')">
+            <h2>
+              <span class="section-icon" style="background:rgba(52,211,153,0.1);color:#34d399">$</span>
+              Revenus
+            </h2>
+            <svg class="section-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </div>
+          <div class="section-body">
+            <div class="section-content">
+              <div class="field">
+                <label>Revenu d'emploi</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="revenu-emploi" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Travail autonome (net)</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="revenu-autonome" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Pension / retraite</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="revenu-pension" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Autres revenus</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="revenu-autres" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Placements -->
+        <div class="section" id="sec-placements">
+          <div class="section-header" onclick="toggleSection('sec-placements')">
+            <h2>
+              <span class="section-icon" style="background:rgba(96,165,250,0.1);color:#60a5fa">%</span>
+              Revenus de placements
+            </h2>
+            <svg class="section-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </div>
+          <div class="section-body">
+            <div class="section-content">
+              <div class="field">
+                <label>Dividendes &eacute;ligibles</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="div-eligible" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Dividendes non &eacute;ligibles</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="div-non-eligible" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Gains en capital</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="gains-capital" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Int&eacute;r&ecirc;ts et autres</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="interets" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Deductions -->
+        <div class="section open" id="sec-deductions">
+          <div class="section-header" onclick="toggleSection('sec-deductions')">
+            <h2>
+              <span class="section-icon" style="background:rgba(249,115,22,0.1);color:#F97316">&#8722;</span>
+              D&eacute;ductions
+            </h2>
+            <svg class="section-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </div>
+          <div class="section-body">
+            <div class="section-content">
+              <div class="slider-group">
+                <div class="field">
+                  <label>Cotisation REER</label>
+                  <div class="slider-row">
+                    <input type="range" id="reer-slider" min="0" max="32490" step="100" value="0" />
+                    <span class="slider-value" id="reer-display">0 $</span>
+                  </div>
+                  <div class="slider-limits">
+                    <span>0 $</span>
+                    <span id="reer-max-label">Max : 32 490 $</span>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Cotisation REER (saisie exacte)</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="reer-input" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>CELIAPP</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="celiapp" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Cotisations syndicales</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="cotisations-syndicales" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Frais de garde</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="frais-garde" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Credits -->
+        <div class="section" id="sec-credits">
+          <div class="section-header" onclick="toggleSection('sec-credits')">
+            <h2>
+              <span class="section-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa">&#10003;</span>
+              Cr&eacute;dits d'imp&ocirc;t
+            </h2>
+            <svg class="section-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </div>
+          <div class="section-body">
+            <div class="section-content">
+              <div class="field">
+                <label>Frais m&eacute;dicaux</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="frais-medicaux" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Dons de bienfaisance</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="dons" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Epargne -->
+        <div class="section" id="sec-epargne">
+          <div class="section-header" onclick="toggleSection('sec-epargne')">
+            <h2>
+              <span class="section-icon" style="background:rgba(251,191,36,0.1);color:#fbbf24">&#9733;</span>
+              &Eacute;pargne
+            </h2>
+            <svg class="section-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+          </div>
+          <div class="section-body">
+            <div class="section-content single-col">
+              <div class="info-box">
+                <strong>CELI</strong> &mdash; Plafond 2025 : 7 000 $. Les revenus dans un CELI sont
+                libres d'imp&ocirc;t. Aucun impact sur le calcul fiscal, mais maximisez-le!
+              </div>
+              <div class="field">
+                <label>Cotisation REEE (pour calcul subvention SCEE)</label>
+                <div class="input-wrap">
+                  <input type="text" inputmode="numeric" id="reee" value="0" />
+                  <span class="suffix">$</span>
+                </div>
+              </div>
+              <div class="info-box" id="reee-info" style="display:none">
+                <strong>Subvention SCEE estim&eacute;e :</strong> <span id="reee-scee">0 $</span><br />
+                Le gouvernement f&eacute;d&eacute;ral verse 20&nbsp;% sur les premiers 2 500&nbsp;$ par enfant (max 500&nbsp;$/an).
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Results -->
+      <div class="results-panel">
+
+        <!-- Sommaire -->
+        <div class="results-card" id="card-sommaire">
+          <h3>Sommaire</h3>
+          <div class="result-row">
+            <span class="label">Revenu total</span>
+            <span class="value" id="r-revenu-total">0 $</span>
+          </div>
+          <div class="result-row">
+            <span class="label">D&eacute;ductions</span>
+            <span class="value" id="r-deductions">0 $</span>
+          </div>
+          <hr class="result-divider" />
+          <div class="result-row highlight">
+            <span class="label">Revenu imposable</span>
+            <span class="value" id="r-revenu-imposable">0 $</span>
+          </div>
+          <hr class="result-divider" />
+          <div class="result-row">
+            <span class="label">Imp&ocirc;t f&eacute;d&eacute;ral</span>
+            <span class="value" id="r-impot-fed">0 $</span>
+          </div>
+          <div class="result-row">
+            <span class="label">Imp&ocirc;t Qu&eacute;bec</span>
+            <span class="value" id="r-impot-qc">0 $</span>
+          </div>
+          <div class="result-row sub">
+            <span class="label">RRQ / RRQ2</span>
+            <span class="value" id="r-rrq">0 $</span>
+          </div>
+          <div class="result-row sub">
+            <span class="label">AE</span>
+            <span class="value" id="r-ae">0 $</span>
+          </div>
+          <div class="result-row sub">
+            <span class="label">RQAP</span>
+            <span class="value" id="r-rqap">0 $</span>
+          </div>
+          <hr class="result-divider" />
+          <div class="result-row highlight">
+            <span class="label">Total imp&ocirc;ts + cotisations</span>
+            <span class="value" id="r-total">0 $</span>
+          </div>
+          <div class="rate-badges">
+            <span class="rate-badge effective">Effectif : <span id="r-taux-effectif">0 %</span></span>
+            <span class="rate-badge marginal">Marginal : <span id="r-taux-marginal">0 %</span></span>
+          </div>
+        </div>
+
+        <!-- Optimisateur REER -->
+        <div class="results-card" id="card-optimisateur">
+          <h3>Impact REER</h3>
+          <div class="result-row">
+            <span class="label">&Eacute;conomie d'imp&ocirc;t REER</span>
+            <span class="value" id="r-eco-reer" style="color:#34d399">0 $</span>
+          </div>
+          <div class="result-row">
+            <span class="label">Co&ucirc;t r&eacute;el du REER</span>
+            <span class="value" id="r-cout-reer">0 $</span>
+          </div>
+          <div class="result-row sub">
+            <span class="label">&Eacute;conomie par 1 000 $ REER</span>
+            <span class="value" id="r-eco-par-1000" style="color:#34d399">0 $</span>
+          </div>
+          <div class="result-row sub">
+            <span class="label">Espace REER restant</span>
+            <span class="value" id="r-espace-reer">0 $</span>
+          </div>
+        </div>
+
+        <!-- Comparaison -->
+        <div class="results-card" id="card-compare">
+          <h3>Avant / Apr&egrave;s d&eacute;ductions</h3>
+          <div class="compare-group">
+            <div class="compare-label">Imp&ocirc;t f&eacute;d&eacute;ral</div>
+            <div class="compare-bar-wrap">
+              <div class="compare-bar before" id="bar-fed-before" style="width:0%"></div>
+            </div>
+            <div class="compare-bar-wrap">
+              <div class="compare-bar after" id="bar-fed-after" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="compare-group">
+            <div class="compare-label">Imp&ocirc;t Qu&eacute;bec</div>
+            <div class="compare-bar-wrap">
+              <div class="compare-bar before" id="bar-qc-before" style="width:0%"></div>
+            </div>
+            <div class="compare-bar-wrap">
+              <div class="compare-bar after" id="bar-qc-after" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="results-card" id="card-suggestions">
+          <h3>Suggestions</h3>
+          <div id="suggestions-list">
+            <p style="font-size:13px;color:#6b7280">Entrez vos revenus pour obtenir des suggestions personnalis&eacute;es.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      Cet outil est &agrave; titre informatif seulement. Il ne constitue pas un avis fiscal professionnel.
+      Consultez un comptable ou fiscaliste pour votre situation particuli&egrave;re.
+    </p>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <p>&copy; 2026 Kodra Conseil, SENC</p>
+    <div class="footer-links">
+      <a href="https://kodra.ca">www.kodra.ca</a>
+      <span style="color:rgba(255,255,255,0.1)">|</span>
+      <a href="mailto:seb@kodra.ca">seb@kodra.ca</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// Moteur fiscal 2025 — Québec / Canada
+// ============================================================
+
+// --- Constantes 2025 ---
+const FED_BRACKETS = [
+  { limit: 57375,  rate: 0.15   },
+  { limit: 114750, rate: 0.205  },
+  { limit: 158468, rate: 0.26   },
+  { limit: 226000, rate: 0.29   },
+  { limit: Infinity, rate: 0.33 }
+];
+const FED_PERSONAL = 16129;
+const FED_QC_ABATEMENT = 0.165;
+
+const QC_BRACKETS = [
+  { limit: 53255,  rate: 0.14   },
+  { limit: 106495, rate: 0.19   },
+  { limit: 129590, rate: 0.24   },
+  { limit: Infinity, rate: 0.2575 }
+];
+const QC_PERSONAL = 18571;
+
+// Cotisations sociales
+const RRQ_RATE = 0.064;
+const RRQ_MAX_PENSIONABLE = 71300;
+const RRQ_EXEMPTION = 3500;
+const RRQ2_RATE = 0.01;
+const RRQ2_MAX = 81200;
+
+const EI_QC_RATE = 0.0132;
+const EI_MAX_INSURABLE = 65700;
+
+const RQAP_RATE = 0.00494;
+const RQAP_MAX = 98000;
+
+// Dividendes
+const DIV_ELIGIBLE_GROSS_UP = 0.38;
+const DIV_ELIGIBLE_FED_CREDIT_RATE = 0.150198;
+const DIV_ELIGIBLE_QC_CREDIT_RATE = 0.117;
+
+const DIV_NON_ELIGIBLE_GROSS_UP = 0.15;
+const DIV_NON_ELIGIBLE_FED_CREDIT_RATE = 0.090301;
+const DIV_NON_ELIGIBLE_QC_CREDIT_RATE = 0.0532;
+
+// Gains en capital
+const CG_INCLUSION_RATE_1 = 0.50;
+const CG_INCLUSION_RATE_2 = 0.6667;
+const CG_THRESHOLD = 250000;
+
+// REER
+const REER_MAX = 32490;
+const REER_RATE = 0.18;
+
+// CELIAPP max
+const CELIAPP_MAX = 8000;
+
+// --- Helpers ---
+function parseNum(id) {
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  return Math.max(0, parseFloat(el.value.replace(/[^0-9.-]/g, '')) || 0);
+}
+
+function fmt(n) {
+  return Math.round(n).toLocaleString('fr-CA') + ' $';
+}
+
+function fmtPct(n) {
+  return (n * 100).toFixed(1) + ' %';
+}
+
+function calcBracketTax(income, brackets) {
+  let tax = 0;
+  let prev = 0;
+  for (const b of brackets) {
+    if (income <= prev) break;
+    const taxable = Math.min(income, b.limit) - prev;
+    tax += taxable * b.rate;
+    prev = b.limit;
+  }
+  return tax;
+}
+
+function getMarginalRate(income, brackets) {
+  for (const b of brackets) {
+    if (income <= b.limit) return b.rate;
+  }
+  return brackets[brackets.length - 1].rate;
+}
+
+// --- Capital gains ---
+function calcCapitalGainInclusion(totalGain) {
+  if (totalGain <= 0) return 0;
+  if (totalGain <= CG_THRESHOLD) {
+    return totalGain * CG_INCLUSION_RATE_1;
+  }
+  return CG_THRESHOLD * CG_INCLUSION_RATE_1 + (totalGain - CG_THRESHOLD) * CG_INCLUSION_RATE_2;
+}
+
+// --- Cotisations sociales ---
+function calcRRQ(employmentIncome, selfEmploymentIncome) {
+  const pensionableEmployment = Math.min(employmentIncome, RRQ_MAX_PENSIONABLE);
+  const pensionableSelf = Math.min(selfEmploymentIncome, Math.max(0, RRQ_MAX_PENSIONABLE - pensionableEmployment));
+  const totalPensionable = pensionableEmployment + pensionableSelf;
+
+  // RRQ base
+  const rrqBase = Math.max(0, totalPensionable - RRQ_EXEMPTION) * RRQ_RATE;
+  // Self-employed pay double (employee + employer share)
+  const rrqSelf = pensionableSelf > 0
+    ? Math.max(0, pensionableSelf - (RRQ_EXEMPTION * pensionableSelf / Math.max(1, totalPensionable))) * RRQ_RATE
+    : 0;
+
+  // RRQ2
+  const totalForRRQ2 = Math.min(employmentIncome + selfEmploymentIncome, RRQ2_MAX);
+  const rrq2Base = Math.max(0, totalForRRQ2 - RRQ_MAX_PENSIONABLE) * RRQ2_RATE;
+  const rrq2Self = pensionableSelf > 0 && (employmentIncome + selfEmploymentIncome) > RRQ_MAX_PENSIONABLE
+    ? Math.max(0, Math.min(selfEmploymentIncome, RRQ2_MAX - Math.max(RRQ_MAX_PENSIONABLE, employmentIncome))) * RRQ2_RATE
+    : 0;
+
+  return {
+    employee: rrqBase + rrq2Base,
+    selfExtra: rrqSelf + rrq2Self
+  };
+}
+
+function calcEI(employmentIncome) {
+  return Math.min(employmentIncome, EI_MAX_INSURABLE) * EI_QC_RATE;
+}
+
+function calcRQAP(employmentIncome, selfEmploymentIncome) {
+  const total = Math.min(employmentIncome + selfEmploymentIncome, RQAP_MAX);
+  const employeePortion = Math.min(employmentIncome, RQAP_MAX) * RQAP_RATE;
+  const selfPortion = Math.min(selfEmploymentIncome, Math.max(0, RQAP_MAX - employmentIncome)) * RQAP_RATE * 1.4; // Self-employed rate is higher (~0.878%)
+  // Actually self-employed pay 0.878% total
+  const selfRate = 0.00878;
+  const selfPortionActual = Math.min(selfEmploymentIncome, Math.max(0, RQAP_MAX - employmentIncome)) * selfRate;
+  return employeePortion + selfPortionActual;
+}
+
+// --- Main calc ---
+function calcAll() {
+  // Read inputs
+  const emploi = parseNum('revenu-emploi');
+  const autonome = parseNum('revenu-autonome');
+  const pension = parseNum('revenu-pension');
+  const autres = parseNum('revenu-autres');
+  const divElig = parseNum('div-eligible');
+  const divNonElig = parseNum('div-non-eligible');
+  const gainsCapital = parseNum('gains-capital');
+  const interets = parseNum('interets');
+  const reer = parseNum('reer-input');
+  const celiapp = Math.min(parseNum('celiapp'), CELIAPP_MAX);
+  const syndicales = parseNum('cotisations-syndicales');
+  const garde = parseNum('frais-garde');
+  const medicaux = parseNum('frais-medicaux');
+  const dons = parseNum('dons');
+  const reee = parseNum('reee');
+
+  // REER max
+  const revenuGagne = emploi + autonome + pension;
+  const reerMax = Math.min(REER_MAX, revenuGagne * REER_RATE);
+  const reerEffectif = Math.min(reer, reerMax);
+
+  // Update slider max
+  const sliderEl = document.getElementById('reer-slider');
+  sliderEl.max = Math.max(100, Math.round(reerMax));
+  document.getElementById('reer-max-label').textContent = 'Max : ' + fmt(reerMax);
+
+  // Gross-up dividends
+  const divEligGrossUp = divElig * (1 + DIV_ELIGIBLE_GROSS_UP);
+  const divNonEligGrossUp = divNonElig * (1 + DIV_NON_ELIGIBLE_GROSS_UP);
+
+  // Capital gain inclusion
+  const cgInclusion = calcCapitalGainInclusion(gainsCapital);
+
+  // Total income (line 150 equivalent)
+  const revenuBrut = emploi + autonome + pension + autres + divEligGrossUp + divNonEligGrossUp + cgInclusion + interets;
+
+  // Deductions
+  const totalDeductions = reerEffectif + celiapp + syndicales + garde;
+
+  // Taxable income
+  const revenuImposable = Math.max(0, revenuBrut - totalDeductions);
+
+  // --- Federal tax ---
+  let fedTaxGross = calcBracketTax(revenuImposable, FED_BRACKETS);
+
+  // Federal personal credit
+  fedTaxGross -= FED_PERSONAL * 0.15;
+
+  // CPP/QPP credit (employee portion deductible at 15%)
+  const rrq = calcRRQ(emploi, autonome);
+  const rrqTotal = rrq.employee + rrq.selfExtra;
+  fedTaxGross -= rrq.employee * 0.15;
+
+  // EI credit
+  const ei = calcEI(emploi);
+  fedTaxGross -= ei * 0.15;
+
+  // Dividend tax credits (federal)
+  const fedDivCreditElig = divEligGrossUp * DIV_ELIGIBLE_FED_CREDIT_RATE;
+  const fedDivCreditNonElig = divNonEligGrossUp * DIV_NON_ELIGIBLE_FED_CREDIT_RATE;
+  fedTaxGross -= (fedDivCreditElig + fedDivCreditNonElig);
+
+  // Medical expenses credit (federal) — 3% of net income threshold, min $2,759
+  const medThreshold = Math.min(revenuImposable * 0.03, 2759);
+  const medCreditFed = Math.max(0, medicaux - medThreshold) * 0.15;
+  fedTaxGross -= medCreditFed;
+
+  // Donations credit (federal)
+  let donCreditFed = 0;
+  if (dons > 0) {
+    donCreditFed = Math.min(dons, 200) * 0.15 + Math.max(0, dons - 200) * 0.29;
+    if (revenuImposable > 226000) {
+      donCreditFed = Math.min(dons, 200) * 0.15 + Math.max(0, dons - 200) * 0.33;
+    }
+  }
+  fedTaxGross -= donCreditFed;
+
+  // Quebec abatement
+  const fedTaxBeforeAbatement = Math.max(0, fedTaxGross);
+  const fedTax = Math.max(0, fedTaxBeforeAbatement * (1 - FED_QC_ABATEMENT));
+
+  // --- Quebec tax ---
+  let qcTaxGross = calcBracketTax(revenuImposable, QC_BRACKETS);
+
+  // QC personal credit
+  qcTaxGross -= QC_PERSONAL * 0.14;
+
+  // QPP credit at 14% (Québec rate for first bracket)
+  qcTaxGross -= rrq.employee * 0.14;
+
+  // QC dividend credits
+  const qcDivCreditElig = divEligGrossUp * DIV_ELIGIBLE_QC_CREDIT_RATE;
+  const qcDivCreditNonElig = divNonEligGrossUp * DIV_NON_ELIGIBLE_QC_CREDIT_RATE;
+  qcTaxGross -= (qcDivCreditElig + qcDivCreditNonElig);
+
+  // Medical expenses credit (QC) — 3% threshold
+  const medCreditQc = Math.max(0, medicaux - revenuImposable * 0.03) * 0.14;
+  qcTaxGross -= medCreditQc;
+
+  // Donations credit (QC)
+  let donCreditQc = 0;
+  if (dons > 0) {
+    donCreditQc = Math.min(dons, 200) * 0.14 + Math.max(0, dons - 200) * 0.2575;
+  }
+  qcTaxGross -= donCreditQc;
+
+  const qcTax = Math.max(0, qcTaxGross);
+
+  // --- Cotisations ---
+  const rqap = calcRQAP(emploi, autonome);
+
+  const totalCotisations = rrqTotal + ei + rqap;
+  const totalTax = fedTax + qcTax + totalCotisations;
+
+  // Taux
+  const tauxEffectif = revenuBrut > 0 ? totalTax / revenuBrut : 0;
+  const margFed = getMarginalRate(revenuImposable, FED_BRACKETS) * (1 - FED_QC_ABATEMENT);
+  const margQc = getMarginalRate(revenuImposable, QC_BRACKETS);
+  const tauxMarginal = margFed + margQc;
+
+  // --- "Before" calc (without REER/CELIAPP) ---
+  const revenuImposableBefore = Math.max(0, revenuBrut - syndicales - garde);
+  const fedBefore = Math.max(0, calcBracketTax(revenuImposableBefore, FED_BRACKETS) - FED_PERSONAL * 0.15 - rrq.employee * 0.15 - ei * 0.15 - fedDivCreditElig - fedDivCreditNonElig - medCreditFed - donCreditFed) * (1 - FED_QC_ABATEMENT);
+  const qcBefore = Math.max(0, calcBracketTax(revenuImposableBefore, QC_BRACKETS) - QC_PERSONAL * 0.14 - rrq.employee * 0.14 - qcDivCreditElig - qcDivCreditNonElig - medCreditQc - donCreditQc);
+
+  // REER impact
+  const ecoReer = Math.max(0, (Math.max(0, fedBefore) + Math.max(0, qcBefore)) - (fedTax + qcTax));
+  const coutReel = reerEffectif - ecoReer;
+  const ecoPar1000 = reerEffectif > 0 ? (ecoReer / reerEffectif) * 1000 : tauxMarginal * 1000;
+  const espaceRestant = Math.max(0, reerMax - reerEffectif);
+
+  // REEE / SCEE
+  const scee = Math.min(reee * 0.20, 500);
+
+  // --- Update DOM ---
+  document.getElementById('r-revenu-total').textContent = fmt(revenuBrut);
+  document.getElementById('r-deductions').textContent = fmt(totalDeductions);
+  document.getElementById('r-revenu-imposable').textContent = fmt(revenuImposable);
+  document.getElementById('r-impot-fed').textContent = fmt(fedTax);
+  document.getElementById('r-impot-qc').textContent = fmt(qcTax);
+  document.getElementById('r-rrq').textContent = fmt(rrqTotal);
+  document.getElementById('r-ae').textContent = fmt(ei);
+  document.getElementById('r-rqap').textContent = fmt(rqap);
+  document.getElementById('r-total').textContent = fmt(totalTax);
+  document.getElementById('r-taux-effectif').textContent = fmtPct(tauxEffectif);
+  document.getElementById('r-taux-marginal').textContent = fmtPct(tauxMarginal);
+
+  // Optimisateur
+  document.getElementById('r-eco-reer').textContent = fmt(ecoReer);
+  document.getElementById('r-cout-reer').textContent = fmt(coutReel);
+  document.getElementById('r-eco-par-1000').textContent = fmt(ecoPar1000);
+  document.getElementById('r-espace-reer').textContent = fmt(espaceRestant);
+
+  // Comparison bars
+  const maxTax = Math.max(fedBefore, qcBefore, fedTax, qcTax, 1);
+  setBar('bar-fed-before', fedBefore, maxTax);
+  setBar('bar-fed-after', fedTax, maxTax);
+  setBar('bar-qc-before', qcBefore, maxTax);
+  setBar('bar-qc-after', qcTax, maxTax);
+
+  // REEE
+  if (reee > 0) {
+    document.getElementById('reee-info').style.display = '';
+    document.getElementById('reee-scee').textContent = fmt(scee);
+  } else {
+    document.getElementById('reee-info').style.display = 'none';
+  }
+
+  // Suggestions
+  generateSuggestions({
+    revenuBrut, revenuImposable, reerEffectif, reerMax, celiapp,
+    tauxMarginal, dons, reee, scee, espaceRestant, ecoPar1000,
+    emploi, autonome, gainsCapital
+  });
+}
+
+function setBar(id, value, max) {
+  const el = document.getElementById(id);
+  const pct = max > 0 ? Math.max(2, (value / max) * 100) : 0;
+  el.style.width = pct + '%';
+  el.textContent = fmt(value);
+}
+
+// --- Suggestions ---
+function generateSuggestions(s) {
+  const list = [];
+
+  // REER space
+  if (s.espaceRestant > 1000) {
+    const eco = Math.round(s.espaceRestant * s.tauxMarginal);
+    list.push({
+      tag: 'reer', tagClass: 'reer',
+      text: `Il vous reste <span class="amount">${fmt(s.espaceRestant)}</span> d'espace REER.
+        Une cotisation compl&egrave;te pourrait vous &eacute;conomiser environ <span class="amount">${fmt(eco)}</span> en imp&ocirc;t.`
+    });
+  }
+
+  // CELIAPP
+  if (s.celiapp < CELIAPP_MAX && s.revenuBrut > 0) {
+    const resteCeliapp = CELIAPP_MAX - s.celiapp;
+    const eco = Math.round(resteCeliapp * s.tauxMarginal);
+    list.push({
+      tag: 'celiapp', tagClass: 'celiapp',
+      text: `Le CELIAPP permet de d&eacute;duire jusqu'&agrave; <span class="amount">8 000 $</span>/an
+        pour l'achat d'une premi&egrave;re maison.
+        ${s.celiapp > 0 ? `Il vous reste <span class="amount">${fmt(resteCeliapp)}</span> d'espace.` : ''}
+        &Eacute;conomie potentielle : <span class="amount">${fmt(eco)}</span>.`
+    });
+  }
+
+  // Marginal rate per $1000 REER
+  if (s.revenuImposable > 0 && s.tauxMarginal > 0) {
+    list.push({
+      tag: 'reer', tagClass: 'reer',
+      text: `&Agrave; votre taux marginal de <span class="amount">${fmtPct(s.tauxMarginal)}</span>,
+        chaque 1 000 $ cotis&eacute; au REER vous &eacute;conomise environ <span class="amount">${fmt(s.ecoPar1000)}</span>.`
+    });
+  }
+
+  // REEE
+  if (s.reee > 0 && s.scee > 0) {
+    list.push({
+      tag: 'reee', tagClass: 'reee',
+      text: `Votre cotisation REEE de <span class="amount">${fmt(s.reee)}</span>
+        g&eacute;n&egrave;re une subvention SCEE de <span class="amount">${fmt(s.scee)}</span> &mdash; c'est un rendement imm&eacute;diat de 20&nbsp;%.`
+    });
+  } else if (s.reee === 0 && s.revenuBrut > 30000) {
+    list.push({
+      tag: 'reee', tagClass: 'reee',
+      text: `Si vous avez des enfants, cotiser <span class="amount">2 500 $</span> au REEE
+        donne droit &agrave; <span class="amount">500 $</span> de subvention SCEE (20&nbsp;% gratuit).`
+    });
+  }
+
+  // Dons
+  if (s.dons > 0 && s.dons <= 200) {
+    list.push({
+      tag: 'don', tagClass: 'don',
+      text: `Le cr&eacute;dit pour dons augmente significativement au-del&agrave; de 200 $. Si possible, regroupez vos dons
+        avec votre conjoint(e) pour d&eacute;passer ce seuil et b&eacute;n&eacute;ficier du taux bonifi&eacute;.`
+    });
+  }
+
+  // CELI reminder
+  if (s.revenuBrut > 20000) {
+    list.push({
+      tag: 'celi', tagClass: 'celi',
+      text: `N'oubliez pas le CELI : <span class="amount">7 000 $</span> de nouveau plafond en 2025.
+        Les revenus y sont enti&egrave;rement libres d'imp&ocirc;t.`
+    });
+  }
+
+  // Near bracket change (check proximity to Quebec brackets)
+  const qcBracketLimits = [53255, 106495, 129590];
+  for (const limit of qcBracketLimits) {
+    const diff = limit - s.revenuImposable;
+    if (diff > 0 && diff < 3000) {
+      list.push({
+        tag: 'palier', tagClass: 'palier',
+        text: `Vous &ecirc;tes &agrave; <span class="amount">${fmt(diff)}</span> du prochain palier d'imposition Qu&eacute;bec
+          (${fmt(limit)}). Une cotisation REER pourrait vous maintenir dans le palier inf&eacute;rieur.`
+      });
+      break;
+    }
+  }
+
+  // Render
+  const container = document.getElementById('suggestions-list');
+  if (list.length === 0 && s.revenuBrut === 0) {
+    container.innerHTML = '<p style="font-size:13px;color:#6b7280">Entrez vos revenus pour obtenir des suggestions personnalis&eacute;es.</p>';
+    return;
+  }
+  if (list.length === 0) {
+    container.innerHTML = '<p style="font-size:13px;color:#6b7280">Aucune suggestion suppl&eacute;mentaire pour le moment.</p>';
+    return;
+  }
+  container.innerHTML = list.map(s =>
+    `<div class="suggestion"><div class="stag ${s.tagClass}">${s.tag}</div><div>${s.text}</div></div>`
+  ).join('');
+}
+
+// --- Section toggle ---
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// --- Slider <-> Input sync ---
+const reerSlider = document.getElementById('reer-slider');
+const reerInput = document.getElementById('reer-input');
+const reerDisplay = document.getElementById('reer-display');
+
+reerSlider.addEventListener('input', function() {
+  const val = parseInt(this.value);
+  reerInput.value = val;
+  reerDisplay.textContent = fmt(val);
+  calcAll();
+});
+
+reerInput.addEventListener('input', function() {
+  const val = parseNum('reer-input');
+  reerSlider.value = val;
+  reerDisplay.textContent = fmt(val);
+  calcAll();
+});
+
+// --- Input formatting & events ---
+document.querySelectorAll('.input-wrap input[type="text"]').forEach(input => {
+  input.addEventListener('focus', function() {
+    if (this.value === '0') this.value = '';
+  });
+  input.addEventListener('blur', function() {
+    if (this.value.trim() === '' || this.value.trim() === '-') this.value = '0';
+  });
+  input.addEventListener('input', function() {
+    // Don't re-trigger for the REER input (handled by sync above)
+    if (this.id !== 'reer-input') {
+      calcAll();
+    }
+  });
+});
+
+// --- Init ---
+calcAll();
+</script>
+
+</body>
+</html>
