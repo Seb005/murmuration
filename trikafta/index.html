@@ -326,28 +326,16 @@ function drugMol(x, y, type, size, animated){
   const r = 16 * s;
   const cls = animated ? 'bob' : '';
   if(type === 'elx'){
-    // Pentagon shape for Elexacaftor
-    return `<g transform="translate(${x},${y})" class="${cls}">
-      <circle cx="0" cy="0" r="${r+10}" fill="url(#glowE)"/>
-      <polygon points="${pentPoints(0,0,r)}" fill="#f472b6" stroke="#ec4899" stroke-width="2"/>
-      <text x="0" y="4" text-anchor="middle" fill="#fff" font-size="${10*s}" font-weight="700" font-family="Inter">ELX</text>
-    </g>`;
+    const inner = `<circle cx="0" cy="0" r="${r+10}" fill="url(#glowE)"/><polygon points="${pentPoints(0,0,r)}" fill="#f472b6" stroke="#ec4899" stroke-width="2"/><text x="0" y="4" text-anchor="middle" fill="#fff" font-size="${10*s}" font-weight="700" font-family="Inter">ELX</text>`;
+    return cls ? `<g transform="translate(${x},${y})"><g class="${cls}">${inner}</g></g>` : `<g transform="translate(${x},${y})">${inner}</g>`;
   }
   if(type === 'tez'){
-    // Diamond shape for Tezacaftor
-    return `<g transform="translate(${x},${y})" class="${cls}">
-      <circle cx="0" cy="0" r="${r+8}" fill="rgba(96,165,250,0.15)"/>
-      <polygon points="0,${-r} ${r},0 0,${r} ${-r},0" fill="#60a5fa" stroke="#3b82f6" stroke-width="2"/>
-      <text x="0" y="4" text-anchor="middle" fill="#fff" font-size="${10*s}" font-weight="700" font-family="Inter">TEZ</text>
-    </g>`;
+    const inner = `<circle cx="0" cy="0" r="${r+8}" fill="rgba(96,165,250,0.15)"/><polygon points="0,${-r} ${r},0 0,${r} ${-r},0" fill="#60a5fa" stroke="#3b82f6" stroke-width="2"/><text x="0" y="4" text-anchor="middle" fill="#fff" font-size="${10*s}" font-weight="700" font-family="Inter">TEZ</text>`;
+    return cls ? `<g transform="translate(${x},${y})"><g class="${cls}">${inner}</g></g>` : `<g transform="translate(${x},${y})">${inner}</g>`;
   }
   if(type === 'iva'){
-    // Hexagon shape for Ivacaftor
-    return `<g transform="translate(${x},${y})" class="${cls}">
-      <circle cx="0" cy="0" r="${r+10}" fill="url(#glowI)"/>
-      <polygon points="${hexPoints(0,0,r)}" fill="#34d399" stroke="#10b981" stroke-width="2"/>
-      <text x="0" y="4" text-anchor="middle" fill="#fff" font-size="${10*s}" font-weight="700" font-family="Inter">IVA</text>
-    </g>`;
+    const inner = `<circle cx="0" cy="0" r="${r+10}" fill="url(#glowI)"/><polygon points="${hexPoints(0,0,r)}" fill="#34d399" stroke="#10b981" stroke-width="2"/><text x="0" y="4" text-anchor="middle" fill="#fff" font-size="${10*s}" font-weight="700" font-family="Inter">IVA</text>`;
+    return cls ? `<g transform="translate(${x},${y})"><g class="${cls}">${inner}</g></g>` : `<g transform="translate(${x},${y})">${inner}</g>`;
   }
   return '';
 }
@@ -361,7 +349,9 @@ function hexPoints(cx,cy,r){
 
 /* Chloride ion */
 function ion(x, y, opacity, cls){
-  return `<g transform="translate(${x},${y})" opacity="${opacity||1}" ${cls?`class="${cls}"`:''}><circle cx="0" cy="0" r="10" fill="#38bdf8" opacity="0.85"/><text x="0" y="4" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" font-family="Inter">Cl\u207b</text></g>`;
+  const inner = `<circle cx="0" cy="0" r="10" fill="#38bdf8" opacity="0.85"/><text x="0" y="4" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" font-family="Inter">Cl\u207b</text>`;
+  if(cls) return `<g transform="translate(${x},${y})" opacity="${opacity||1}"><g class="${cls}">${inner}</g></g>`;
+  return `<g transform="translate(${x},${y})" opacity="${opacity||1}">${inner}</g>`;
 }
 
 /* Water molecule */
@@ -405,7 +395,7 @@ function correctingCFTR(x, y, drugsBound){
 
 /* Corrected protein ready to go */
 function correctedCFTR(x, y){
-  return `<g transform="translate(${x},${y})" class="bob">
+  return `<g transform="translate(${x},${y})"><g class="bob">
     <circle cx="0" cy="0" r="50" fill="url(#glowP)" opacity="0.3"/>
     <!-- Clean symmetric shape -->
     <path d="M-25,-20 Q-10,-35 10,-28 Q28,-35 30,-18 Q38,-2 30,12 Q35,28 22,30 Q8,38 -8,30 Q-25,35 -28,20 Q-38,5 -30,-8 Q-35,-15 -25,-20Z"
@@ -414,7 +404,7 @@ function correctedCFTR(x, y){
     <text x="0" y="14" text-anchor="middle" fill="#c4b5fd" font-size="9" font-weight="500" font-family="Inter">Corrig\u00e9e</text>
     ${drugMol(38, -18, 'elx', 0.55, false)}
     ${drugMol(-36, 14, 'tez', 0.55, false)}
-  </g>`;
+  </g></g>`;
 }
 
 /* Annotation box */
