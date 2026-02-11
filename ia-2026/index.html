@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>L'IA en 2026 &mdash; Webinaire CJEAO | Labo Kodra</title>
+  <meta name="description" content="L'IA en 2026 : ce que &ccedil;a change vraiment pour nos PME. Webinaire pr&eacute;sent&eacute; par S&eacute;bastien B&eacute;lisle, Kodra Conseil." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B1529;
+      --bg2: #111D35;
+      --bg3: #162040;
+      --text: #f0f4ff;
+      --text2: #94a3b8;
+      --muted: #64748b;
+      --orange: #F97316;
+      --orange-dim: rgba(249,115,22,0.15);
+      --green: #34d399;
+      --blue: #60a5fa;
+      --pink: #f472b6;
+      --purple: #a78bfa;
+      --amber: #fbbf24;
+      --red: #ef4444;
+      --cyan: #38bdf8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Header */
+    .topbar { position: relative; z-index: 1; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 16px 24px; }
+    .topbar-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-left img { height: 22px; opacity: 0.7; }
+    .topbar-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.1); }
+    .topbar-badge { font-family: monospace; font-size: 12px; color: #6b7280; letter-spacing: 0.05em; }
+    .back-link { font-family: monospace; font-size: 12px; color: #6b7280; transition: color 0.2s; display: flex; align-items: center; gap: 6px; }
+    .back-link:hover { color: var(--orange); }
+    .back-link svg { width: 14px; height: 14px; }
+
+    /* Page */
+    .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Hero */
+    .hero { text-align: center; margin-bottom: 3rem; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid rgba(249,115,22,0.2); background: rgba(249,115,22,0.06);
+      border-radius: 999px; padding: 5px 14px; margin-bottom: 16px;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .hero-badge-text { font-family: monospace; font-size: 12px; color: var(--orange); }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4.5vw, 2.6rem); font-weight: 800; margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--orange), var(--amber), var(--orange));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero .sub { font-size: 1.05rem; color: var(--text2); max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    .hero .author { margin-top: 16px; font-size: 0.85rem; color: var(--muted); }
+    .hero .author strong { color: var(--text2); }
+
+    /* Section nav */
+    .section-nav {
+      display: flex; justify-content: center; gap: 6px; margin-bottom: 2.5rem; flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 10; padding: 12px 0;
+      background: linear-gradient(var(--bg), var(--bg) 80%, transparent);
+    }
+    .nav-btn {
+      padding: 8px 16px; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 50px;
+      background: transparent; color: var(--text2); font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .nav-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .nav-btn.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+
+    /* Sections */
+    .section { display: none; animation: fadeIn 0.4s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .section-header { margin-bottom: 2rem; }
+    .section-number {
+      font-family: monospace; font-size: 13px; color: var(--orange);
+      border: 1px solid rgba(249,115,22,0.2); background: rgba(249,115,22,0.06);
+      display: inline-block; padding: 3px 10px; border-radius: 6px; margin-bottom: 10px;
+    }
+    .section-header h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); font-weight: 700; margin-bottom: 8px; }
+    .section-header p { font-size: 0.95rem; color: var(--text2); line-height: 1.6; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 24px; text-align: center; transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: rgba(255,255,255,0.12); }
+    .stat-value {
+      font-size: clamp(1.8rem, 4vw, 2.4rem); font-weight: 800; margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--orange), var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-card.blue .stat-value {
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-card.green .stat-value {
+      background: linear-gradient(135deg, var(--green), #6ee7b7);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-card.red .stat-value {
+      background: linear-gradient(135deg, var(--red), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-card.purple .stat-value {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-label { font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
+    .stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+    /* Callout */
+    .callout {
+      background: var(--bg3); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+      padding: 16px 20px; margin: 1.5rem 0; display: flex; align-items: flex-start; gap: 12px;
+    }
+    .callout-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .callout-text { font-size: 0.9rem; color: var(--text2); line-height: 1.6; font-style: italic; }
+
+    /* Two column compare */
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 1.5rem 0; }
+    @media (max-width: 640px) { .compare { grid-template-columns: 1fr; } }
+    .compare-col {
+      background: var(--bg2); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 20px; overflow: hidden;
+    }
+    .compare-col h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .compare-col.hype h3 { color: var(--red); }
+    .compare-col.reality h3 { color: var(--green); }
+    .compare-item { font-size: 0.85rem; color: var(--text2); padding: 6px 0; line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
+    .compare-item span { flex-shrink: 0; }
+
+    /* LLM cards */
+    .llm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 1.5rem 0; }
+    .llm-card {
+      background: var(--bg2); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 20px; text-align: center; transition: all 0.3s; cursor: default;
+    }
+    .llm-card:hover { border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .llm-icon { font-size: 2rem; margin-bottom: 10px; }
+    .llm-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .llm-company { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+    .llm-model { font-family: monospace; font-size: 0.78rem; color: var(--orange); margin-bottom: 8px; }
+    .llm-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.5; margin-bottom: 8px; }
+    .llm-price {
+      display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 3px 10px;
+      border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+    }
+    .llm-card.claude { border-left: 3px solid var(--orange); }
+    .llm-card.chatgpt { border-left: 3px solid var(--green); }
+    .llm-card.gemini { border-left: 3px solid var(--blue); }
+    .llm-card.llama { border-left: 3px solid var(--purple); }
+
+    /* Table */
+    .rec-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.85rem; }
+    .rec-table th {
+      text-align: left; padding: 10px 14px; font-weight: 600; font-size: 0.78rem;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .rec-table td {
+      padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text2);
+    }
+    .rec-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .rec-table .best { color: var(--orange); font-weight: 600; }
+
+    /* Use-case cards */
+    .usecase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 1.5rem 0; }
+    .usecase-card {
+      background: var(--bg2); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 24px; transition: border-color 0.2s;
+    }
+    .usecase-card:hover { border-color: rgba(255,255,255,0.12); }
+    .usecase-icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .usecase-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+    .usecase-card .usecase-highlight {
+      font-family: monospace; font-size: 0.78rem; color: var(--orange); margin-bottom: 10px;
+    }
+    .usecase-card p { font-size: 0.83rem; color: var(--text2); line-height: 1.6; margin-bottom: 10px; }
+    .usecase-tools {
+      display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .usecase-tool {
+      font-family: monospace; font-size: 0.72rem; color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);
+      border-radius: 5px; padding: 2px 7px;
+    }
+
+    /* Shadow AI gauge */
+    .shadow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 1.5rem 0; }
+    .shadow-card {
+      background: var(--bg2); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 20px; text-align: center;
+    }
+    .shadow-card .gauge-value { font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
+    .shadow-card:nth-child(1) .gauge-value { color: var(--red); }
+    .shadow-card:nth-child(2) .gauge-value { color: var(--amber); }
+    .shadow-card:nth-child(3) .gauge-value { color: var(--pink); }
+    .shadow-card:nth-child(4) .gauge-value { color: var(--purple); }
+    .shadow-card .gauge-label { font-size: 0.82rem; color: var(--text2); line-height: 1.5; }
+    .gauge-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 10px; overflow: hidden; }
+    .gauge-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+    /* Scenario */
+    .scenario {
+      background: var(--bg3); border: 1px solid rgba(239,68,68,0.15); border-radius: 16px;
+      padding: 24px; margin: 1.5rem 0; position: relative; overflow: hidden;
+    }
+    .scenario::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--red), var(--amber));
+    }
+    .scenario h4 { font-size: 1rem; font-weight: 700; color: var(--amber); margin-bottom: 12px; }
+    .scenario-step {
+      display: flex; align-items: flex-start; gap: 12px; padding: 8px 0;
+      font-size: 0.88rem; color: var(--text2); line-height: 1.6;
+    }
+    .scenario-num {
+      width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700; background: rgba(239,68,68,0.15); color: var(--red);
+    }
+    .scenario-solution {
+      margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .scenario-solution h5 { font-size: 0.88rem; font-weight: 700; color: var(--green); margin-bottom: 8px; }
+    .scenario-solution p { font-size: 0.85rem; color: var(--text2); }
+
+    /* Timeline */
+    .timeline { margin: 1.5rem 0; }
+    .timeline-phase {
+      background: var(--bg2); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 24px; margin-bottom: 14px; position: relative; overflow: hidden;
+    }
+    .timeline-phase::before {
+      content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    }
+    .timeline-phase.phase-1::before { background: var(--orange); }
+    .timeline-phase.phase-2::before { background: var(--blue); }
+    .timeline-phase.phase-3::before { background: var(--green); }
+    .timeline-phase.phase-4::before { background: var(--purple); }
+    .timeline-phase.phase-5::before { background: var(--amber); }
+    .timeline-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .timeline-step-num {
+      width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.9rem;
+    }
+    .phase-1 .timeline-step-num { background: rgba(249,115,22,0.15); color: var(--orange); }
+    .phase-2 .timeline-step-num { background: rgba(96,165,250,0.15); color: var(--blue); }
+    .phase-3 .timeline-step-num { background: rgba(52,211,153,0.15); color: var(--green); }
+    .phase-4 .timeline-step-num { background: rgba(167,139,250,0.15); color: var(--purple); }
+    .phase-5 .timeline-step-num { background: rgba(251,191,36,0.15); color: var(--amber); }
+    .timeline-title h3 { font-size: 1rem; font-weight: 700; }
+    .timeline-title .timing { font-size: 0.78rem; color: var(--muted); font-family: monospace; }
+    .timeline-items { display: flex; flex-direction: column; gap: 6px; padding-left: 44px; }
+    .timeline-item { font-size: 0.85rem; color: var(--text2); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
+    .timeline-item span { flex-shrink: 0; }
+
+    /* Onto grid */
+    .onto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 1rem 0; }
+    .onto-card {
+      background: var(--bg3); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+      padding: 16px;
+    }
+    .onto-card h5 { font-size: 0.88rem; font-weight: 700; margin-bottom: 4px; }
+    .onto-card .onto-platform { font-size: 0.75rem; color: var(--muted); font-family: monospace; margin-bottom: 6px; }
+    .onto-card p { font-size: 0.82rem; color: var(--text2); line-height: 1.5; }
+
+    /* Policy checklist */
+    .policy-list { list-style: none; padding-left: 0; margin: 1rem 0; }
+    .policy-list li {
+      display: flex; align-items: flex-start; gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; color: var(--text2); line-height: 1.5;
+    }
+    .policy-list li strong { color: var(--text); }
+
+    /* QC / Canada sections */
+    .region-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 1.5rem 0; }
+    @media (max-width: 640px) { .region-grid { grid-template-columns: 1fr; } }
+    .region-col {
+      background: var(--bg2); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 20px; position: relative; overflow: hidden;
+    }
+    .region-col::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .region-col.qc::before { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .region-col.ca::before { background: linear-gradient(90deg, var(--red), var(--orange)); }
+    .region-col h3 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
+    .region-item { font-size: 0.83rem; color: var(--text2); padding: 6px 0; line-height: 1.5; }
+    .region-item strong { color: var(--text); }
+
+    /* CTA */
+    .cta-section {
+      background: var(--bg3); border: 1px solid rgba(249,115,22,0.15); border-radius: 16px;
+      padding: 32px; text-align: center; margin-top: 3rem; position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--orange), var(--amber), var(--orange));
+    }
+    .cta-section h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+    .cta-section p { font-size: 0.9rem; color: var(--text2); line-height: 1.6; max-width: 500px; margin: 0 auto 20px; }
+    .cta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; text-align: left; }
+    .cta-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
+    .cta-item span { flex-shrink: 0; font-size: 1.1rem; }
+    .cta-contact { font-size: 0.85rem; color: var(--muted); margin-top: 12px; }
+    .cta-contact a { color: var(--orange); transition: opacity 0.2s; }
+    .cta-contact a:hover { opacity: 0.8; }
+
+    /* Footer */
+    footer { position: relative; z-index: 1; border-top: 1px solid rgba(255,255,255,0.05); padding: 20px 24px; }
+    .footer-inner {
+      max-width: 900px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .footer-inner p, .footer-links { font-family: monospace; font-size: 12px; color: #4b5563; }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { transition: color 0.2s; }
+    .footer-links a:hover { color: var(--orange); }
+    .footer-sep { color: rgba(255,255,255,0.1); }
+
+    @media (max-width: 640px) {
+      .page { padding: 1rem 1rem 3rem; }
+      .hero h1 { font-size: 1.6rem; }
+      .nav-btn { padding: 6px 12px; font-size: 0.75rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .llm-grid { grid-template-columns: 1fr 1fr; }
+      .rec-table { font-size: 0.75rem; }
+      .rec-table th, .rec-table td { padding: 8px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<nav class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <img src="https://kodra.ca/logo.png" alt="Kodra" />
+      <div class="topbar-divider"></div>
+      <span class="topbar-badge">labo / ia-2026</span>
+    </div>
+    <a href="/" class="back-link">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+      Retour au labo
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      <span class="hero-badge-text">Webinaire CCIAO &middot; F&eacute;vrier 2026</span>
+    </div>
+    <h1>L'IA en 2026</h1>
+    <p class="sub">Ce que &ccedil;a change vraiment pour nos PME &mdash; 45&nbsp;minutes pour voir clair dans la r&eacute;volution IA</p>
+    <p class="author">Par <strong>S&eacute;bastien B&eacute;lisle</strong> &middot; Cofondateur, Kodra Conseil &middot; Charg&eacute; de cours, MBA Ex&eacute;cutif &mdash; UQAT</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="section-nav" id="nav">
+    <button class="nav-btn active" data-s="0">Portrait de l'IA</button>
+    <button class="nav-btn" data-s="1">Les grands LLMs</button>
+    <button class="nav-btn" data-s="2">Cas concrets PME</button>
+    <button class="nav-btn" data-s="3">Shadow AI</button>
+    <button class="nav-btn" data-s="4">Plan d'action</button>
+  </nav>
+
+  <!-- SECTION 0 : Portrait -->
+  <div class="section active" data-section="0">
+    <div class="section-header">
+      <div class="section-number">01</div>
+      <h2>Portrait de l'IA en f&eacute;vrier 2026</h2>
+      <p>Qu&eacute;bec, Canada, monde &mdash; les vrais chiffres</p>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px;">L'IA dans le monde</h3>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">1,35 Md</div>
+        <div class="stat-label">Utilisateurs actifs</div>
+        <div class="stat-sub">16,3 % de la population mondiale</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-value">94 %</div>
+        <div class="stat-label">Des entreprises mondiales utilisent l'IA</div>
+        <div class="stat-sub">Dans au moins 1 fonction</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-value">514 G$</div>
+        <div class="stat-label">March&eacute; mondial IA 2026</div>
+        <div class="stat-sub">+19 % vs 2025</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">&#128200;</span>
+      <div class="callout-text">McKinsey : l'IA pourrait ajouter 13&nbsp;000 milliards $ au PIB mondial d'ici 2030.</div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 14px;">Au Qu&eacute;bec et au Canada</h3>
+    <div class="region-grid">
+      <div class="region-col qc">
+        <h3>&#9899; Qu&eacute;bec</h3>
+        <div class="region-item"><strong>8 M$</strong> &agrave; IVADO pour l'&eacute;cosyst&egrave;me IA</div>
+        <div class="region-item">Cr&eacute;dit d'imp&ocirc;t <strong>CDAEIA de 30 %</strong> sur les salaires admissibles</div>
+        <div class="region-item"><strong>Montr&eacute;al</strong> : plaque tournante mondiale &mdash; MILA, IVADO, SCALE AI, 2 G$ investis depuis 2016</div>
+        <div class="region-item"><strong>Loi 25 en vigueur</strong> &mdash; transparence sur les d&eacute;cisions automatis&eacute;es</div>
+      </div>
+      <div class="region-col ca">
+        <h3>&#127464;&#127462; Canada</h3>
+        <div class="region-item"><strong>925,6 M$</strong> sur 5 ans pour l'infrastructure IA souveraine</div>
+        <div class="region-item"><strong>200 M$</strong> via les agences r&eacute;gionales pour les PME</div>
+        <div class="region-item"><strong>12,5 % des PME</strong> ont adopt&eacute; l'IA (c'&eacute;tait 6,1 % il y a un an)</div>
+        <div class="region-item"><strong>Loi AIDA</strong> : toujours report&eacute;e &mdash; mais les provinces avancent</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">&#9888;&#65039;</span>
+      <div class="callout-text">On n'est pas en retard, mais la fen&ecirc;tre se ferme.</div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 14px;">L'impact r&eacute;el vs le hype</h3>
+    <div class="compare">
+      <div class="compare-col hype">
+        <h3>&#128226; Ce qu'on entend (hype)</h3>
+        <div class="compare-item"><span>&#10060;</span> 85 millions d'emplois remplac&eacute;s</div>
+        <div class="compare-item"><span>&#10060;</span> L'IA va tout automatiser</div>
+        <div class="compare-item"><span>&#10060;</span> Les programmeurs vont dispara&icirc;tre</div>
+        <div class="compare-item"><span>&#10060;</span> March&eacute; de 1&nbsp;810 G$ d'ici 2030</div>
+      </div>
+      <div class="compare-col reality">
+        <h3>&#9989; Ce qui se passe vraiment</h3>
+        <div class="compare-item"><span>&#10004;&#65039;</span> Pas de d&eacute;placement massif observ&eacute;</div>
+        <div class="compare-item"><span>&#10004;&#65039;</span> L'IA acc&eacute;l&egrave;re les t&acirc;ches r&eacute;p&eacute;titives</div>
+        <div class="compare-item"><span>&#10004;&#65039;</span> Adoption double chaque ann&eacute;e</div>
+        <div class="compare-item"><span>&#10004;&#65039;</span> Avantage pour les adopteurs pr&eacute;coces</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">&#128161;</span>
+      <div class="callout-text">L'IA est un acc&eacute;l&eacute;rateur de productivit&eacute;, pas un remplacement des humains. Pas encore.</div>
+    </div>
+  </div>
+
+  <!-- SECTION 1 : LLMs -->
+  <div class="section" data-section="1">
+    <div class="section-header">
+      <div class="section-number">02</div>
+      <h2>&Eacute;tat des grands LLMs</h2>
+      <p>Lequel choisir selon vos besoins ?</p>
+    </div>
+
+    <div class="llm-grid">
+      <div class="llm-card claude">
+        <div class="llm-icon">&#129302;</div>
+        <div class="llm-name">Claude</div>
+        <div class="llm-company">Anthropic</div>
+        <div class="llm-model">Opus 4.6</div>
+        <div class="llm-desc">R&eacute;daction, codage, t&acirc;ches complexes</div>
+        <div class="llm-price">20 $/mois</div>
+      </div>
+      <div class="llm-card chatgpt">
+        <div class="llm-icon">&#128172;</div>
+        <div class="llm-name">ChatGPT</div>
+        <div class="llm-company">OpenAI</div>
+        <div class="llm-model">GPT-5</div>
+        <div class="llm-desc">G&eacute;n&eacute;raliste, &eacute;cosyst&egrave;me large</div>
+        <div class="llm-price">20 $/mois</div>
+      </div>
+      <div class="llm-card gemini">
+        <div class="llm-icon">&#128142;</div>
+        <div class="llm-name">Gemini</div>
+        <div class="llm-company">Google</div>
+        <div class="llm-model">Gemini 3</div>
+        <div class="llm-desc">Multimodal, Google Workspace</div>
+        <div class="llm-price">20 $/mois</div>
+      </div>
+      <div class="llm-card llama">
+        <div class="llm-icon">&#129433;</div>
+        <div class="llm-name">Llama 4</div>
+        <div class="llm-company">Meta</div>
+        <div class="llm-model">Open source</div>
+        <div class="llm-desc">Autoh&eacute;berg&eacute;, 200 langues</div>
+        <div class="llm-price">Gratuit</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">&#128279;</span>
+      <div class="callout-text">En 2026, la norme c'est d'utiliser PLUSIEURS outils. Pas un seul.</div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:2rem 0 14px;">Lequel choisir ?</h3>
+    <div style="overflow-x:auto;">
+      <table class="rec-table">
+        <thead>
+          <tr><th>Vous voulez&hellip;</th><th>Meilleur choix</th><th>Pourquoi</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>&Eacute;crire du contenu professionnel</td><td class="best">Claude</td><td>Meilleur suivi d'instructions</td></tr>
+          <tr><td>Coder / cr&eacute;er une application</td><td class="best">Claude</td><td>Opus 4.6 domine en codage</td></tr>
+          <tr><td>Travailler dans Google Workspace</td><td class="best">Gemini</td><td>Int&eacute;gration native</td></tr>
+          <tr><td>Analyser images ou vid&eacute;os</td><td class="best">Gemini</td><td>Meilleur en multimodal</td></tr>
+          <tr><td>Usage g&eacute;n&eacute;ral / d&eacute;butant</td><td class="best">ChatGPT</td><td>&Eacute;cosyst&egrave;me le plus large</td></tr>
+          <tr><td>Budget serr&eacute; / gratuit</td><td class="best">Gemini Flash</td><td>Offre gratuite g&eacute;n&eacute;reuse</td></tr>
+          <tr><td>H&eacute;bergement priv&eacute;</td><td class="best">Llama 4 / Mistral</td><td>Open source, contr&ocirc;le total</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 2 : Cas concrets -->
+  <div class="section" data-section="2">
+    <div class="section-header">
+      <div class="section-number">03</div>
+      <h2>Cas concrets pour les PME</h2>
+      <p>Bien au-del&agrave; de la r&eacute;daction de courriels</p>
+    </div>
+
+    <div class="usecase-grid">
+      <div class="usecase-card">
+        <div class="usecase-icon">&#127760;</div>
+        <h4>Site web complet</h4>
+        <div class="usecase-highlight">D&egrave;s 3 $/mois</div>
+        <p>Un &eacute;lectricien d'Amos g&eacute;n&egrave;re son site en 2h avec formulaire et portfolio</p>
+        <div class="usecase-tools">
+          <span class="usecase-tool">Wix AI</span>
+          <span class="usecase-tool">Hostinger</span>
+          <span class="usecase-tool">Claude</span>
+        </div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-icon">&#129309;</div>
+        <h4>Suivi clients / CRM</h4>
+        <div class="usecase-highlight">70 % des demandes</div>
+        <p>Un commerce de La Sarre installe un chatbot qui r&eacute;pond 24h/24</p>
+        <div class="usecase-tools">
+          <span class="usecase-tool">HubSpot</span>
+          <span class="usecase-tool">Freshdesk</span>
+          <span class="usecase-tool">Tidio</span>
+        </div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-icon">&#128176;</div>
+        <h4>Facturation auto</h4>
+        <div class="usecase-highlight">81 % plus rapide</div>
+        <p>L'IA lit vos factures et les envoie dans votre comptabilit&eacute;</p>
+        <div class="usecase-tools">
+          <span class="usecase-tool">Lindy</span>
+          <span class="usecase-tool">Bill.com</span>
+          <span class="usecase-tool">NetSuite</span>
+        </div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-icon">&#128227;</div>
+        <h4>Campagne marketing</h4>
+        <div class="usecase-highlight">En 1 journ&eacute;e</div>
+        <p>Strat&eacute;gie, posts sociaux, vid&eacute;os, infolettre &mdash; au lieu de 2 semaines</p>
+        <div class="usecase-tools">
+          <span class="usecase-tool">Claude</span>
+          <span class="usecase-tool">Canva AI</span>
+          <span class="usecase-tool">CapCut</span>
+        </div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-icon">&#129302;</div>
+        <h4>Robot conversationnel</h4>
+        <div class="usecase-highlight">D&egrave;s 20 $/mois</div>
+        <p>Un cabinet comptable r&eacute;pond aux questions imp&ocirc;ts 24h/24</p>
+        <div class="usecase-tools">
+          <span class="usecase-tool">Freshdesk</span>
+          <span class="usecase-tool">Tidio</span>
+          <span class="usecase-tool">ProProfs</span>
+        </div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-icon">&#128202;</div>
+        <h4>Analyse de donn&eacute;es</h4>
+        <div class="usecase-highlight">5 min vs 2 jours</div>
+        <p>3 ans de ventes dans Excel &rarr; tendances, graphiques, recommandations</p>
+        <div class="usecase-tools">
+          <span class="usecase-tool">Claude</span>
+          <span class="usecase-tool">ChatGPT</span>
+          <span class="usecase-tool">Gemini</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 : Shadow AI -->
+  <div class="section" data-section="3">
+    <div class="section-header">
+      <div class="section-number">04</div>
+      <h2>Le Shadow AI</h2>
+      <p>Le danger silencieux dans vos &eacute;quipes</p>
+    </div>
+
+    <div class="shadow-grid">
+      <div class="shadow-card">
+        <div class="gauge-value">78 %</div>
+        <div class="gauge-label">Des employ&eacute;s utilisent des outils IA <strong style="color:var(--red)">NON approuv&eacute;s</strong></div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:78%;background:var(--red)"></div></div>
+      </div>
+      <div class="shadow-card">
+        <div class="gauge-value">38 %</div>
+        <div class="gauge-label">Y partagent des informations <strong style="color:var(--amber)">SENSIBLES</strong></div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:38%;background:var(--amber)"></div></div>
+      </div>
+      <div class="shadow-card">
+        <div class="gauge-value">4,63 M$</div>
+        <div class="gauge-label">Co&ucirc;t moyen d'une <strong style="color:var(--pink)">br&egrave;che Shadow AI</strong></div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:65%;background:var(--pink)"></div></div>
+      </div>
+      <div class="shadow-card">
+        <div class="gauge-value">52 %</div>
+        <div class="gauge-label">N'ont <strong style="color:var(--purple)">JAMAIS</strong> re&ccedil;u de formation s&eacute;curitaire IA</div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:52%;background:var(--purple)"></div></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">&#128274;</span>
+      <div class="callout-text">Interdire l'IA = garantir le Shadow AI. La solution : encadrer, pas interdire.</div>
+    </div>
+
+    <div class="scenario">
+      <h4>&#9888;&#65039; Imaginez ce sc&eacute;nario&hellip;</h4>
+      <div class="scenario-step">
+        <div class="scenario-num">1</div>
+        <div>Votre comptable utilise ChatGPT pour analyser vos &eacute;tats financiers.</div>
+      </div>
+      <div class="scenario-step">
+        <div class="scenario-num">2</div>
+        <div>Sans le savoir, elle colle vos donn&eacute;es confidentielles dans un outil gratuit.</div>
+      </div>
+      <div class="scenario-step">
+        <div class="scenario-num">3</div>
+        <div>Vos marges, vos clients, vos salaires&hellip; sont maintenant dans un syst&egrave;me que vous ne contr&ocirc;lez pas.</div>
+      </div>
+      <div class="scenario-step">
+        <div class="scenario-num">4</div>
+        <div><strong>C'est &ccedil;a, le Shadow AI.</strong> Et &ccedil;a arrive probablement d&eacute;j&agrave; dans votre entreprise.</div>
+      </div>
+      <div class="scenario-solution">
+        <h5>&#9989; La solution</h5>
+        <p>Fournir des outils approuv&eacute;s &middot; Former les &eacute;quipes &middot; &Eacute;tablir des r&egrave;gles claires</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 : Plan d'action -->
+  <div class="section" data-section="4">
+    <div class="section-header">
+      <div class="section-number">05</div>
+      <h2>Plan d'action en 5 &eacute;tapes</h2>
+      <p>Des actions concr&egrave;tes d&egrave;s lundi matin</p>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-phase phase-1">
+        <div class="timeline-header">
+          <div class="timeline-step-num">1</div>
+          <div class="timeline-title">
+            <h3>Se former soi-m&ecirc;me</h3>
+            <div class="timing">Cette semaine</div>
+          </div>
+        </div>
+        <div class="timeline-items">
+          <div class="timeline-item"><span>&#128218;</span> Anthropic AI Fluency (gratuit, 3-4h)</div>
+          <div class="timeline-item"><span>&#128218;</span> Google Grow with Google</div>
+          <div class="timeline-item"><span>&#128218;</span> OpenAI Academy</div>
+          <div class="timeline-item"><span>&#128218;</span> IVADO / MILA</div>
+        </div>
+      </div>
+
+      <div class="timeline-phase phase-2">
+        <div class="timeline-header">
+          <div class="timeline-step-num">2</div>
+          <div class="timeline-title">
+            <h3>Tester un cas simple</h3>
+            <div class="timing">Semaine 2</div>
+          </div>
+        </div>
+        <div class="timeline-items">
+          <div class="timeline-item"><span>&#9989;</span> Choisir UN processus r&eacute;p&eacute;titif</div>
+          <div class="timeline-item"><span>&#128736;</span> Essayer avec la version gratuite</div>
+          <div class="timeline-item"><span>&#9201;</span> Mesurer le temps gagn&eacute;</div>
+        </div>
+      </div>
+
+      <div class="timeline-phase phase-3">
+        <div class="timeline-header">
+          <div class="timeline-step-num">3</div>
+          <div class="timeline-title">
+            <h3>En parler en &eacute;quipe</h3>
+            <div class="timing">Semaine 3</div>
+          </div>
+        </div>
+        <div class="timeline-items">
+          <div class="timeline-item"><span>&#128483;</span> Rencontre : &laquo; qui utilise quoi ? &raquo;</div>
+          <div class="timeline-item"><span>&#128194;</span> Cr&eacute;er un espace de partage</div>
+          <div class="timeline-item"><span>&#11088;</span> Nommer un(e) champion(ne) IA</div>
+        </div>
+      </div>
+
+      <div class="timeline-phase phase-4">
+        <div class="timeline-header">
+          <div class="timeline-step-num">4</div>
+          <div class="timeline-title">
+            <h3>Ontologie technologique</h3>
+            <div class="timing">Mois 2</div>
+          </div>
+        </div>
+        <div class="onto-grid">
+          <div class="onto-card">
+            <h5>Skills (Claude)</h5>
+            <div class="onto-platform">Anthropic</div>
+            <p>Instructions pr&eacute;configur&eacute;es pour vos t&acirc;ches</p>
+          </div>
+          <div class="onto-card">
+            <h5>Gems (Gemini)</h5>
+            <div class="onto-platform">Google</div>
+            <p>Assistants sp&eacute;cialis&eacute;s dans Google</p>
+          </div>
+          <div class="onto-card">
+            <h5>Projets / GPTs (ChatGPT)</h5>
+            <div class="onto-platform">OpenAI</div>
+            <p>Mod&egrave;les personnalis&eacute;s r&eacute;utilisables</p>
+          </div>
+        </div>
+        <div class="timeline-items" style="padding-left:0;margin-top:8px;">
+          <div class="timeline-item"><span>&#128209;</span> Documenter et partager avec l'&eacute;quipe</div>
+        </div>
+      </div>
+
+      <div class="timeline-phase phase-5">
+        <div class="timeline-header">
+          <div class="timeline-step-num">5</div>
+          <div class="timeline-title">
+            <h3>Politique IA d'&eacute;quipe</h3>
+            <div class="timing">Mois 3</div>
+          </div>
+        </div>
+        <ul class="policy-list">
+          <li><span>&#128736;</span> <div><strong>Outils approuv&eacute;s</strong> &mdash; Quels outils, quelles versions, quels plans</div></li>
+          <li><span>&#128274;</span> <div><strong>Donn&eacute;es prot&eacute;g&eacute;es</strong> &mdash; Ce qu'on peut (et ne peut PAS) partager</div></li>
+          <li><span>&#127891;</span> <div><strong>Formation obligatoire</strong> &mdash; Pour tout le monde, pas juste les enthousiastes</div></li>
+          <li><span>&#128269;</span> <div><strong>Audits r&eacute;guliers</strong> &mdash; V&eacute;rifier l'usage et ajuster</div></li>
+        </ul>
+        <div class="callout">
+          <span class="callout-icon">&#128172;</span>
+          <div class="callout-text">Pas besoin d'&ecirc;tre parfait. Il faut commencer la conversation avec votre &eacute;quipe.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Vous n'avez pas &agrave; faire tout &ccedil;a seul.</h2>
+    <p>Kodra Conseil accompagne les PME qu&eacute;b&eacute;coises dans leur adoption de l'IA.</p>
+    <div class="cta-grid">
+      <div class="cta-item"><span>&#127891;</span> <div><strong>Formation en ligne</strong> &mdash; IA au travail, adapt&eacute;e aux PME qu&eacute;b&eacute;coises</div></div>
+      <div class="cta-item"><span>&#128101;</span> <div><strong>Ateliers de facilitation</strong> &mdash; Identifier l'impact IA dans VOTRE entreprise</div></div>
+      <div class="cta-item"><span>&#129309;</span> <div><strong>Accompagnement d'&eacute;quipe</strong> &mdash; De l'exploration &agrave; l'int&eacute;gration</div></div>
+      <div class="cta-item"><span>&#128736;</span> <div><strong>Ontologies personnalis&eacute;es</strong> &mdash; Skills, Gems et GPTs sur mesure</div></div>
+    </div>
+    <p class="cta-contact">
+      <strong>S&eacute;bastien B&eacute;lisle</strong> &middot;
+      <a href="mailto:seb@kodra.ca">seb@kodra.ca</a> &middot;
+      <a href="https://kodra.ca">kodra.ca</a> &middot;
+      819-333-8777
+    </p>
+    <p style="font-size:0.78rem;color:var(--muted);margin-top:16px;">
+      Merci &agrave; la Chambre de commerce et d'industrie d'Abitibi-Ouest pour l'invitation !
+    </p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <p>&copy; 2026 Kodra Conseil, SENC</p>
+    <div class="footer-links">
+      <a href="https://kodra.ca">www.kodra.ca</a>
+      <span class="footer-sep">|</span>
+      <a href="mailto:seb@kodra.ca">seb@kodra.ca</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.section');
+
+function go(i) {
+  navBtns.forEach(b => b.classList.toggle('active', +b.dataset.s === i));
+  sections.forEach(s => s.classList.toggle('active', +s.dataset.section === i));
+  // Animate gauge fills on Shadow AI section
+  if (i === 3) {
+    setTimeout(() => {
+      document.querySelectorAll('.gauge-fill').forEach(f => {
+        f.style.width = f.style.width; // trigger reflow
+      });
+    }, 100);
+  }
+}
+
+document.querySelector('.section-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-btn');
+  if (btn) go(+btn.dataset.s);
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  const cur = [...navBtns].findIndex(b => b.classList.contains('active'));
+  if (e.key === 'ArrowRight' && cur < navBtns.length - 1) go(cur + 1);
+  if (e.key === 'ArrowLeft' && cur > 0) go(cur - 1);
+});
+</script>
+
+</body>
+</html>
