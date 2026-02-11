@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Capacit&eacute; thermique massique &mdash; Labo Kodra</title>
+  <meta name="description" content="Outil interactif pour comprendre la capacit&eacute; thermique massique (Q = mc&Delta;T). Simulation visuelle, comparaison de mat&eacute;riaux et quiz." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* === THEME: Vieux manuel de science === */
+    :root {
+      --paper: #f5eed6;
+      --paper-dark: #e8dfc4;
+      --ink: #2c2416;
+      --ink-light: #5c4f3a;
+      --ink-faded: #8a7d66;
+      --red: #8b2500;
+      --blue: #1a4a6e;
+      --green: #2d5a27;
+      --accent: #8b2500;
+      --rule: #c4b899;
+      --serif: 'Libre Baskerville', 'Georgia', serif;
+      --mono: 'Courier Prime', 'Courier New', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      min-height: 100vh; display: flex; flex-direction: column;
+      font-size: 15px; line-height: 1.6;
+    }
+    a { color: var(--ink); text-decoration: none; }
+
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(180,160,120,0.15) 1px, transparent 1px);
+      background-size: 100% 28px;
+      background-position: 0 14px;
+    }
+
+    /* === Header === */
+    header {
+      position: relative; z-index: 1;
+      border-bottom: 2px solid var(--ink);
+      padding: 16px 24px;
+    }
+    .header-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-area img { height: 24px; width: auto; opacity: 0.6; filter: sepia(1) saturate(0.3); }
+    .divider { width: 1px; height: 20px; background: var(--rule); }
+    .badge {
+      font-family: var(--mono); font-size: 12px; color: var(--ink-faded);
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .back-link {
+      font-family: var(--mono); font-size: 12px; color: var(--ink-faded);
+      display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--red); }
+    .back-link svg { width: 12px; height: 12px; }
+
+    /* === Main === */
+    main {
+      position: relative; z-index: 1;
+      padding: 40px 24px 64px; flex: 1;
+    }
+    .page-container { max-width: 960px; margin: 0 auto; }
+    .page-title {
+      font-size: clamp(1.6rem, 3.5vw, 2.2rem); font-weight: 700;
+      margin-bottom: 4px; font-style: italic;
+      border-bottom: 1px solid var(--rule); padding-bottom: 8px;
+    }
+    .page-title span { color: var(--red); font-style: normal; }
+    .page-subtitle {
+      font-size: 0.95rem; color: var(--ink-light);
+      margin-bottom: 32px; line-height: 1.7;
+      font-style: italic;
+    }
+
+    /* chapitre badge */
+    .chapitre {
+      font-family: var(--mono); font-size: 11px; color: var(--ink-faded);
+      text-transform: uppercase; letter-spacing: 0.15em;
+      margin-bottom: 4px; display: block;
+    }
+
+    /* === Tab Bar === */
+    .tab-bar {
+      display: flex; gap: 0;
+      border: 2px solid var(--ink);
+      border-radius: 0; padding: 0;
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+    .tab {
+      flex: 1; padding: 10px 16px; text-align: center;
+      border-radius: 0; font-size: 13px; font-weight: 400;
+      font-family: var(--mono);
+      color: var(--ink-faded); cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      user-select: none;
+      border-right: 1px solid var(--rule);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .tab:last-child { border-right: none; }
+    .tab.active { background: var(--ink); color: var(--paper); font-weight: 700; }
+    .tab:hover:not(.active) { background: var(--paper-dark); color: var(--ink); }
+    .tab svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* === Two Column Layout === */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px; align-items: start;
+    }
+
+    /* === Sections === */
+    .section {
+      background: transparent;
+      border: 1.5px solid var(--ink);
+      border-radius: 0; margin-bottom: 16px; padding: 20px;
+      position: relative;
+    }
+    .section h3 {
+      font-size: 0.8rem; font-weight: 700; color: var(--ink);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 16px; font-family: var(--mono);
+      border-bottom: 1px solid var(--rule); padding-bottom: 8px;
+    }
+
+    /* === Material Grid === */
+    .material-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .mat-card {
+      background: var(--paper-dark);
+      border: 1.5px solid var(--rule);
+      border-radius: 0; padding: 10px 8px; text-align: center;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .mat-card:hover { border-color: var(--ink); }
+    .mat-card.active {
+      border-color: var(--red); border-width: 2px;
+      background: #faf3e0;
+      box-shadow: 2px 2px 0 var(--red);
+    }
+    .mat-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      margin: 0 auto 6px; display: block;
+      border: 1px solid var(--ink);
+    }
+    .mat-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; font-family: var(--serif); }
+    .mat-c { font-family: var(--mono); font-size: 10px; color: var(--ink-faded); }
+
+    /* === Slider === */
+    .slider-group { margin-bottom: 16px; }
+    .slider-group:last-child { margin-bottom: 0; }
+    .slider-label {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px;
+    }
+    .slider-label span:first-child {
+      font-size: 12px; color: var(--ink-light); font-family: var(--mono);
+    }
+    .slider-value {
+      font-family: var(--mono); font-size: 14px;
+      color: var(--red); font-weight: 700;
+    }
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none; appearance: none;
+      height: 4px; background: var(--rule);
+      border-radius: 0; outline: none;
+      border: 1px solid var(--ink-faded);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px; background: var(--paper);
+      border-radius: 0; cursor: pointer;
+      border: 2px solid var(--ink);
+      box-shadow: 1px 1px 0 var(--ink);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px; background: var(--paper);
+      border-radius: 0; cursor: pointer;
+      border: 2px solid var(--ink);
+      box-shadow: 1px 1px 0 var(--ink);
+    }
+    .slider-limits {
+      display: flex; justify-content: space-between;
+      font-family: var(--mono); font-size: 10px; color: var(--ink-faded); margin-top: 4px;
+    }
+
+    /* === Simulation Panel === */
+    .sim-panel { position: sticky; top: 24px; }
+    .sim-card {
+      background: var(--paper-dark);
+      border: 2px solid var(--ink);
+      border-radius: 0; padding: 20px; margin-bottom: 12px;
+      text-align: center;
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+    .sim-card canvas {
+      width: 100%; border-radius: 0;
+      display: block; margin-bottom: 16px;
+      border: 1px solid var(--rule);
+    }
+    .temp-display {
+      font-family: var(--mono); font-size: 48px; font-weight: 700;
+      color: var(--red); margin-bottom: 4px;
+      transition: color 0.5s;
+    }
+    .temp-label {
+      font-size: 11px; color: var(--ink-faded);
+      font-family: var(--mono); margin-bottom: 12px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .thermometer {
+      height: 8px; background: var(--paper);
+      border: 1px solid var(--ink);
+      border-radius: 0; overflow: hidden; margin-bottom: 16px;
+    }
+    .thermometer-fill {
+      height: 100%; border-radius: 0;
+      background: linear-gradient(90deg, var(--blue), var(--red), #cc3300);
+      transition: width 0.4s ease; width: 0%;
+    }
+    .formula-live {
+      font-family: var(--mono); font-size: 13px; color: var(--ink-light);
+      line-height: 1.8; padding: 12px;
+      border: 1px dashed var(--rule); background: var(--paper);
+    }
+    .formula-live .var-q { color: var(--green); font-weight: 700; }
+    .formula-live .var-m { color: var(--blue); font-weight: 700; }
+    .formula-live .var-c { color: #6b3a8a; font-weight: 700; }
+    .formula-live .var-dt { color: var(--red); font-weight: 700; }
+
+    /* === Info Box === */
+    .info-box {
+      background: var(--paper);
+      border-left: 4px solid var(--red);
+      border-radius: 0; padding: 12px 16px;
+      font-size: 13px; color: var(--ink-light); line-height: 1.6;
+      margin-top: 12px;
+      font-style: italic;
+    }
+    .info-box strong { color: var(--red); font-style: normal; }
+
+    /* === Compare Tab === */
+    .compare-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-bottom: 20px;
+    }
+    .compare-col {
+      background: var(--paper-dark);
+      border: 1.5px solid var(--ink);
+      border-radius: 0; padding: 16px; text-align: center;
+    }
+    .compare-col select {
+      width: 100%; background: var(--paper);
+      border: 1.5px solid var(--ink); border-radius: 0;
+      padding: 8px 10px; color: var(--ink); font-family: var(--mono); font-size: 12px;
+      outline: none; margin-bottom: 12px;
+    }
+    .compare-col select:focus { border-color: var(--red); }
+    .compare-col canvas {
+      width: 100%; border-radius: 0; display: block; margin-bottom: 8px;
+      border: 1px solid var(--rule);
+    }
+    .compare-temp {
+      font-family: var(--mono); font-size: 26px; font-weight: 700; margin-bottom: 2px;
+    }
+    .compare-c-badge {
+      font-family: var(--mono); font-size: 10px; color: var(--ink-faded);
+      background: var(--paper); border: 1px solid var(--rule);
+      border-radius: 0; padding: 2px 8px; display: inline-block;
+    }
+
+    /* === Compare bars === */
+    .bar-group { margin-bottom: 12px; }
+    .bar-label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; margin-bottom: 4px;
+    }
+    .bar-label .name { color: var(--ink); font-weight: 700; }
+    .bar-label .val { font-family: var(--mono); color: var(--red); font-weight: 700; }
+    .bar-track {
+      height: 22px; background: var(--paper);
+      border: 1px solid var(--ink);
+      border-radius: 0; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 0;
+      transition: width 0.5s ease;
+      display: flex; align-items: center; padding: 0 8px;
+      font-family: var(--mono); font-size: 10px; white-space: nowrap;
+    }
+
+    /* === Calculate Tab === */
+    .mode-selector { display: flex; gap: 0; margin-bottom: 20px; flex-wrap: wrap;
+      border: 1.5px solid var(--ink); overflow: hidden;
+    }
+    .mode-btn {
+      flex: 1; min-width: 100px; padding: 10px; text-align: center;
+      border: none; border-right: 1px solid var(--rule);
+      font-size: 12px; cursor: pointer; font-family: var(--mono);
+      transition: all 0.2s; color: var(--ink-faded); background: var(--paper);
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .mode-btn:last-child { border-right: none; }
+    .mode-btn.active {
+      background: var(--ink); color: var(--paper); font-weight: 700;
+    }
+    .mode-btn:hover:not(.active) { background: var(--paper-dark); color: var(--ink); }
+
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+    .field label { font-size: 11px; color: var(--ink-faded); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
+    .input-wrap { position: relative; display: flex; align-items: center; }
+    .input-wrap input {
+      width: 100%; background: var(--paper);
+      border: 1.5px solid var(--ink); border-radius: 0;
+      padding: 10px 50px 10px 12px; color: var(--ink);
+      font-family: var(--mono); font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-wrap input:focus { border-color: var(--red); box-shadow: 2px 2px 0 var(--red); }
+    .input-wrap input:disabled { opacity: 0.3; cursor: not-allowed; }
+    .input-wrap .suffix {
+      position: absolute; right: 10px;
+      font-family: var(--mono); font-size: 11px; color: var(--ink-faded);
+      pointer-events: none;
+    }
+
+    .preset-row {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+    }
+    .preset-btn {
+      font-family: var(--mono); font-size: 10px; color: var(--ink-faded);
+      border: 1px solid var(--rule); background: var(--paper);
+      border-radius: 0; padding: 4px 10px; cursor: pointer; transition: all 0.15s;
+      text-transform: uppercase;
+    }
+    .preset-btn:hover { border-color: var(--ink); color: var(--ink); }
+    .preset-btn.active {
+      border-color: var(--red); color: var(--red); background: #faf3e0;
+      box-shadow: 1px 1px 0 var(--red); font-weight: 700;
+    }
+
+    .results-panel { position: sticky; top: 24px; }
+    .results-card {
+      background: var(--paper-dark);
+      border: 2px solid var(--ink);
+      border-radius: 0; padding: 20px; margin-bottom: 12px;
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+    .results-card h3 {
+      font-size: 0.8rem; font-weight: 700; color: var(--ink);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 16px; font-family: var(--mono);
+      border-bottom: 1px solid var(--rule); padding-bottom: 8px;
+    }
+    .step-line {
+      font-family: var(--mono); font-size: 14px; line-height: 2;
+      color: var(--ink-light);
+    }
+    .step-line.result {
+      font-size: 18px; color: var(--red); font-weight: 700;
+    }
+    .context-box {
+      background: #eef5e8;
+      border-left: 4px solid var(--green);
+      border-radius: 0; padding: 12px 16px;
+      font-size: 13px; color: var(--ink-light); line-height: 1.6; margin-top: 12px;
+      font-style: italic;
+    }
+    .context-box strong { color: var(--green); font-style: normal; }
+
+    /* === Quiz Tab === */
+    .quiz-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;
+    }
+    .score-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px;
+      background: var(--ink); color: var(--paper);
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      border-radius: 0;
+    }
+    .progress-bar {
+      height: 6px; background: var(--paper-dark);
+      border: 1px solid var(--ink);
+      border-radius: 0; flex: 1; margin-right: 16px;
+    }
+    .progress-fill {
+      height: 100%; background: var(--red); border-radius: 0;
+      transition: width 0.5s;
+    }
+    .question-card {
+      background: var(--paper-dark);
+      border: 2px solid var(--ink);
+      border-radius: 0; padding: 32px; text-align: center;
+      max-width: 640px; margin: 0 auto;
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+    .question-number {
+      font-family: var(--mono); font-size: 11px; color: var(--ink-faded);
+      margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .question-text {
+      font-size: 1.05rem; line-height: 1.7; margin-bottom: 24px;
+      font-family: var(--serif);
+    }
+    .answer-btn {
+      display: block; width: 100%; text-align: left;
+      background: var(--paper);
+      border: 1.5px solid var(--rule);
+      border-radius: 0; padding: 14px 20px;
+      color: var(--ink); font-size: 14px; cursor: pointer;
+      margin-bottom: 8px; transition: all 0.15s;
+      font-family: var(--serif);
+    }
+    .answer-btn:hover:not(.locked) { border-color: var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+    .answer-btn.correct { border-color: var(--green); background: #eef5e8; color: var(--green); box-shadow: 2px 2px 0 var(--green); }
+    .answer-btn.wrong { border-color: var(--red); background: #f9ebe8; color: var(--red); box-shadow: 2px 2px 0 var(--red); }
+    .answer-btn.locked { cursor: default; }
+    .answer-btn.reveal { border-color: var(--green); background: #f0f8ec; }
+
+    .feedback-box {
+      margin-top: 20px; padding: 16px;
+      border-radius: 0; font-size: 13px; line-height: 1.6;
+      display: none; font-style: italic; text-align: left;
+    }
+    .feedback-box.show { display: block; }
+    .feedback-box.correct-fb {
+      background: #eef5e8; border-left: 4px solid var(--green); color: #2a4a24;
+    }
+    .feedback-box.wrong-fb {
+      background: #f9ebe8; border-left: 4px solid var(--red); color: #5c1a0a;
+    }
+    .next-btn {
+      display: inline-block; margin-top: 20px;
+      background: var(--ink); color: var(--paper); border: none;
+      border-radius: 0; padding: 12px 32px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em;
+      box-shadow: 2px 2px 0 var(--red);
+      transition: all 0.15s;
+    }
+    .next-btn:hover { box-shadow: 3px 3px 0 var(--red); transform: translate(-1px, -1px); }
+
+    .final-card { text-align: center; padding: 48px 32px; }
+    .final-score {
+      font-family: var(--mono); font-size: 64px; font-weight: 700;
+      color: var(--red); margin-bottom: 8px;
+    }
+    .final-msg { font-size: 1.1rem; margin-bottom: 24px; color: var(--ink-light); font-style: italic; }
+
+    /* === Footer === */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 2px solid var(--ink);
+      padding: 20px 24px;
+    }
+    .footer-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .footer-inner p, .footer-links { font-family: var(--mono); font-size: 11px; color: var(--ink-faded); }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { transition: color 0.2s; }
+    .footer-links a:hover { color: var(--red); }
+
+    /* === Responsive === */
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      .sim-panel, .results-panel { position: static; }
+      .compare-grid { grid-template-columns: 1fr; }
+      .material-grid { grid-template-columns: repeat(4, 1fr); }
+      .tab svg { display: none; }
+      .tab { font-size: 11px; padding: 8px 10px; }
+    }
+    @media (max-width: 500px) {
+      .material-grid { grid-template-columns: repeat(2, 1fr); }
+      .mode-selector { flex-direction: column; }
+      .mode-btn { min-width: auto; border-right: none; border-bottom: 1px solid var(--rule); }
+      .mode-btn:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-area">
+      <img src="https://kodra.ca/logo.png" alt="Kodra Conseil" />
+      <div class="divider"></div>
+      <span class="badge">labo</span>
+    </div>
+    <a href="/" class="back-link">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      Retour au labo
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="page-container">
+    <span class="chapitre">Chapitre 7 &mdash; Thermodynamique</span>
+    <h1 class="page-title">Capacit&eacute; <span>thermique massique</span></h1>
+    <p class="page-subtitle">
+      Explore la relation entre &eacute;nergie, masse et temp&eacute;rature avec la formule
+      <strong style="color:var(--red)">Q = mc&Delta;T</strong>. Chauffe, compare et teste tes connaissances!
+    </p>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('explorer')">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.545 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z"/></svg>
+        Explorer
+      </div>
+      <div class="tab" onclick="switchTab('comparer')">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+        Comparer
+      </div>
+      <div class="tab" onclick="switchTab('calculer')">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z"/></svg>
+        Calculer
+      </div>
+      <div class="tab" onclick="switchTab('defi')">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-4.52 0m-4.52 0a6.003 6.003 0 004.52 0"/></svg>
+        D&eacute;fi
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TAB 1: EXPLORER                              -->
+    <!-- ============================================ -->
+    <div id="tab-explorer" class="tab-panel active">
+      <div class="layout">
+        <div>
+          <!-- Material selector -->
+          <div class="section">
+            <h3>Mat&eacute;riau</h3>
+            <div class="material-grid" id="mat-grid-explorer"></div>
+          </div>
+
+          <!-- Sliders -->
+          <div class="section">
+            <h3>Param&egrave;tres</h3>
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>&Eacute;nergie (Q)</span>
+                <span class="slider-value" id="explorer-q-val">10 000 J</span>
+              </div>
+              <input type="range" id="explorer-q" min="0" max="50000" step="100" value="10000" />
+              <div class="slider-limits"><span>0 J</span><span>50 000 J</span></div>
+            </div>
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Masse (m)</span>
+                <span class="slider-value" id="explorer-m-val">100 g</span>
+              </div>
+              <input type="range" id="explorer-m" min="10" max="500" step="10" value="100" />
+              <div class="slider-limits"><span>10 g</span><span>500 g</span></div>
+            </div>
+          </div>
+
+          <div class="info-box" id="explorer-info">
+            <strong>L'eau</strong> a la capacit&eacute; thermique la plus &eacute;lev&eacute;e des substances courantes. C'est pourquoi les oc&eacute;ans r&eacute;gulent le climat!
+          </div>
+        </div>
+
+        <!-- Simulation -->
+        <div class="sim-panel">
+          <div class="sim-card">
+            <canvas id="explorer-canvas" width="340" height="300"></canvas>
+            <div class="temp-display" id="explorer-temp">22,4</div>
+            <div class="temp-label">Temp&eacute;rature finale (&deg;C)</div>
+            <div class="thermometer">
+              <div class="thermometer-fill" id="explorer-thermo"></div>
+            </div>
+            <div class="formula-live" id="explorer-formula">
+              <span class="var-q">Q</span> = <span class="var-m">m</span> &times; <span class="var-c">c</span> &times; <span class="var-dt">&Delta;T</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TAB 2: COMPARER                              -->
+    <!-- ============================================ -->
+    <div id="tab-comparer" class="tab-panel">
+      <div class="compare-grid" id="compare-grid">
+        <div class="compare-col">
+          <select id="cmp-sel-0"></select>
+          <canvas id="cmp-canvas-0" width="200" height="180"></canvas>
+          <div class="compare-temp" id="cmp-temp-0" style="color:#3a7ab5">20,0 &deg;C</div>
+          <div class="compare-c-badge" id="cmp-c-0">c = 4 186</div>
+        </div>
+        <div class="compare-col">
+          <select id="cmp-sel-1"></select>
+          <canvas id="cmp-canvas-1" width="200" height="180"></canvas>
+          <div class="compare-temp" id="cmp-temp-1" style="color:#6e6e6e">20,0 &deg;C</div>
+          <div class="compare-c-badge" id="cmp-c-1">c = 449</div>
+        </div>
+        <div class="compare-col">
+          <select id="cmp-sel-2"></select>
+          <canvas id="cmp-canvas-2" width="200" height="180"></canvas>
+          <div class="compare-temp" id="cmp-temp-2" style="color:#b36b2a">20,0 &deg;C</div>
+          <div class="compare-c-badge" id="cmp-c-2">c = 385</div>
+        </div>
+      </div>
+
+      <!-- Shared controls -->
+      <div class="section">
+        <h3>Param&egrave;tres partag&eacute;s</h3>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>&Eacute;nergie (Q)</span>
+            <span class="slider-value" id="cmp-q-val">10 000 J</span>
+          </div>
+          <input type="range" id="cmp-q" min="0" max="50000" step="100" value="10000" />
+          <div class="slider-limits"><span>0 J</span><span>50 000 J</span></div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Masse (m)</span>
+            <span class="slider-value" id="cmp-m-val">100 g</span>
+          </div>
+          <input type="range" id="cmp-m" min="10" max="500" step="10" value="100" />
+          <div class="slider-limits"><span>10 g</span><span>500 g</span></div>
+        </div>
+      </div>
+
+      <!-- Bars -->
+      <div class="section">
+        <h3>Comparaison &Delta;T</h3>
+        <div id="compare-bars"></div>
+      </div>
+
+      <div class="info-box" id="compare-info"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TAB 3: CALCULER                              -->
+    <!-- ============================================ -->
+    <div id="tab-calculer" class="tab-panel">
+      <div class="layout">
+        <div>
+          <!-- Mode selector -->
+          <div class="mode-selector">
+            <div class="mode-btn active" onclick="setCalcMode('deltaT')">Trouver &Delta;T</div>
+            <div class="mode-btn" onclick="setCalcMode('Q')">Trouver Q</div>
+            <div class="mode-btn" onclick="setCalcMode('m')">Trouver m</div>
+            <div class="mode-btn" onclick="setCalcMode('c')">Trouver c</div>
+          </div>
+
+          <!-- Material presets -->
+          <div class="section">
+            <h3>Mat&eacute;riau (remplir c)</h3>
+            <div class="preset-row" id="preset-row"></div>
+          </div>
+
+          <!-- Input fields -->
+          <div class="section">
+            <h3>Valeurs connues</h3>
+            <div class="field" id="field-Q">
+              <label>&Eacute;nergie (Q)</label>
+              <div class="input-wrap">
+                <input type="text" inputmode="numeric" id="calc-Q" value="10000" />
+                <span class="suffix">J</span>
+              </div>
+            </div>
+            <div class="field" id="field-m">
+              <label>Masse (m)</label>
+              <div class="input-wrap">
+                <input type="text" inputmode="numeric" id="calc-m" value="100" />
+                <span class="suffix">g</span>
+              </div>
+            </div>
+            <div class="field" id="field-c">
+              <label>Capacit&eacute; thermique massique (c)</label>
+              <div class="input-wrap">
+                <input type="text" inputmode="numeric" id="calc-c" value="4.19" />
+                <span class="suffix">J/(g&middot;&deg;C)</span>
+              </div>
+            </div>
+            <div class="field" id="field-deltaT">
+              <label>Variation de temp&eacute;rature (&Delta;T)</label>
+              <div class="input-wrap">
+                <input type="text" inputmode="numeric" id="calc-deltaT" value="10" />
+                <span class="suffix">&deg;C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-panel">
+          <div class="results-card">
+            <h3>R&eacute;solution</h3>
+            <div id="calc-steps"></div>
+          </div>
+          <div class="context-box" id="calc-context"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TAB 4: DEFI                                  -->
+    <!-- ============================================ -->
+    <div id="tab-defi" class="tab-panel">
+      <div class="quiz-header">
+        <div class="progress-bar"><div class="progress-fill" id="quiz-progress"></div></div>
+        <div class="score-badge" id="quiz-score">0 / 0</div>
+      </div>
+      <div id="quiz-container"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <p>&copy; 2026 Kodra Conseil, SENC</p>
+    <div class="footer-links">
+      <a href="https://kodra.ca">www.kodra.ca</a>
+      <span style="color:var(--rule)">|</span>
+      <a href="mailto:seb@kodra.ca">seb@kodra.ca</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// Capacite thermique massique — Outil interactif
+// ============================================================
+
+// --- Materials data ---
+const MATERIALS = [
+  { id: 'water',    name: 'Eau',       c: 4.19, color: '#3a7ab5' },
+  { id: 'iron',     name: 'Fer',       c: 0.449, color: '#6e6e6e' },
+  { id: 'copper',   name: 'Cuivre',    c: 0.385, color: '#b36b2a' },
+  { id: 'aluminum', name: 'Aluminium', c: 0.897, color: '#8a8a8a' },
+  { id: 'glass',    name: 'Verre',     c: 0.840, color: '#7a6b9a' },
+  { id: 'sand',     name: 'Sable',     c: 0.830, color: '#b8962a' },
+  { id: 'oil',      name: 'Huile',     c: 2.00,  color: '#3a7a50' },
+  { id: 'ethanol',  name: '\u00c9thanol',  c: 2.44, color: '#9a4a6a' },
+];
+
+const INITIAL_TEMP = 20;
+const MAT = id => MATERIALS.find(m => m.id === id);
+
+// --- Formatting ---
+function fmtN(n, d) { return n.toFixed(d === undefined ? 1 : d).replace('.', ','); }
+function fmtInt(n) { return Math.round(n).toLocaleString('fr-CA'); }
+function fmtC(c) { return c < 1 ? fmtN(c, 3) : fmtN(c, 2); }
+
+// --- Physics ---
+function calcDeltaT(Q, m, c) { return Q / (m * c); }
+function calcQ(m, c, dT) { return m * c * dT; }
+function calcMass(Q, c, dT) { return Q / (c * dT); }
+function calcC(Q, m, dT) { return Q / (m * dT); }
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+let activeTab = 'explorer';
+
+function switchTab(id) {
+  activeTab = id;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['explorer', 'comparer', 'calculer', 'defi'];
+    t.classList.toggle('active', tabs[i] === id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'comparer') updateCompare();
+  if (id === 'calculer') updateCalc();
+}
+
+// ============================================================
+// TAB 1: EXPLORER
+// ============================================================
+let explorerMat = 'water';
+let explorerQ = 10000;
+let explorerM = 100;
+let explorerParticles = [];
+let explorerTime = 0;
+
+// Build material grid
+function buildMatGrid(containerId, selected, onSelect) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = MATERIALS.map(m =>
+    `<div class="mat-card${m.id === selected ? ' active' : ''}" data-id="${m.id}" onclick="${onSelect}('${m.id}')">
+      <span class="mat-dot" style="background:${m.color}"></span>
+      <div class="mat-name">${m.name}</div>
+      <div class="mat-c">c = ${fmtC(m.c)}</div>
+    </div>`
+  ).join('');
+}
+
+function selectExplorerMat(id) {
+  explorerMat = id;
+  buildMatGrid('mat-grid-explorer', id, 'selectExplorerMat');
+  updateExplorer();
+  updateExplorerInfo();
+}
+
+function updateExplorerInfo() {
+  const infos = {
+    water: "<strong>L'eau</strong> a la capacit\u00e9 thermique la plus \u00e9lev\u00e9e des substances courantes. C'est pourquoi les oc\u00e9ans r\u00e9gulent le climat!",
+    iron: '<strong>Le fer</strong> chauffe rapidement. Un clou au soleil devient br\u00fblant bien avant qu\'une flaque d\'eau ne ti\u00e9disse.',
+    copper: '<strong>Le cuivre</strong> est le champion de la conduction. Les chefs cuisiniers adorent les casseroles en cuivre!',
+    aluminum: "<strong>L'aluminium</strong> chauffe mod\u00e9r\u00e9ment vite. C'est pour \u00e7a qu'on l'utilise en cuisine et en a\u00e9ronautique.",
+    glass: '<strong>Le verre</strong> a une capacit\u00e9 thermique moyenne. Ta tasse en c\u00e9ramique garde le caf\u00e9 chaud un moment.',
+    sand: '<strong>Le sable</strong> chauffe et refroidit vite. Le d\u00e9sert est br\u00fblant le jour et glacial la nuit!',
+    oil: "<strong>L'huile</strong> a une bonne capacit\u00e9 thermique. C'est pourquoi elle est utilis\u00e9e comme fluide caloporteur.",
+    ethanol: "<strong>L'\u00e9thanol</strong> a une capacit\u00e9 thermique \u00e9lev\u00e9e. Il est utilis\u00e9 dans les thermom\u00e8tres et comme antigel.",
+  };
+  document.getElementById('explorer-info').innerHTML = infos[explorerMat] || '';
+}
+
+function initExplorerParticles() {
+  explorerParticles = [];
+  for (let i = 0; i < 40; i++) {
+    explorerParticles.push({ x: 0.15 + Math.random() * 0.7, y: 0.3 + Math.random() * 0.55, vx: 0, vy: 0 });
+  }
+}
+
+function updateExplorer() {
+  const mat = MAT(explorerMat);
+  const dT = calcDeltaT(explorerQ, explorerM, mat.c);
+  const finalTemp = INITIAL_TEMP + dT;
+
+  document.getElementById('explorer-temp').textContent = fmtN(finalTemp);
+  document.getElementById('explorer-temp').style.color =
+    finalTemp > 100 ? '#8b2500' : finalTemp > 60 ? '#a0522d' : '#1a4a6e';
+
+  const thermoPct = Math.min(Math.max(((finalTemp) / 150) * 100, 2), 100);
+  document.getElementById('explorer-thermo').style.width = thermoPct + '%';
+
+  document.getElementById('explorer-formula').innerHTML =
+    `<span class="var-q">${fmtInt(explorerQ)} J</span> = ` +
+    `<span class="var-m">${fmtInt(explorerM)} g</span> &times; ` +
+    `<span class="var-c">${fmtC(mat.c)} J/(g&middot;&deg;C)</span> &times; ` +
+    `<span class="var-dt">${fmtN(dT)} &deg;C</span>`;
+}
+
+function drawExplorer() {
+  const canvas = document.getElementById('explorer-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const mat = MAT(explorerMat);
+  const dT = calcDeltaT(explorerQ, explorerM, mat.c);
+  const finalTemp = INITIAL_TEMP + dT;
+  const heatRatio = Math.min(dT / 80, 1);
+
+  // Beaker
+  const bx = W * 0.2, by = H * 0.12, bw = W * 0.6, bh = H * 0.65;
+  // Substance fill
+  const fillH = bh * (0.5 + (explorerM / 500) * 0.35);
+  const fy = by + bh - fillH;
+
+  // Substance color with heat tint
+  const baseCol = mat.color;
+  ctx.fillStyle = baseCol;
+  ctx.globalAlpha = 0.25 + heatRatio * 0.25;
+  ctx.beginPath();
+  ctx.roundRect(bx + 3, fy, bw - 6, fillH - 3, [0, 0, 4, 4]);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Heat glow at bottom
+  if (heatRatio > 0.05) {
+    const grd = ctx.createLinearGradient(bx, by + bh, bx, fy);
+    grd.addColorStop(0, `rgba(139,37,0,${heatRatio * 0.35})`);
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.roundRect(bx + 3, fy, bw - 6, fillH - 3, [0, 0, 4, 4]);
+    ctx.fill();
+  }
+
+  // Particles (brownian motion)
+  const speed = 0.3 + heatRatio * 2.5;
+  explorerTime += 0.016;
+  for (const p of explorerParticles) {
+    p.vx += (Math.random() - 0.5) * speed * 0.3;
+    p.vy += (Math.random() - 0.5) * speed * 0.3 - 0.02;
+    p.vx *= 0.92; p.vy *= 0.92;
+    p.x += p.vx * 0.01; p.y += p.vy * 0.01;
+    // Bounds
+    const minX = 0.22, maxX = 0.78;
+    const minY = fy / H, maxY = (by + bh - 6) / H;
+    if (p.x < minX) { p.x = minX; p.vx *= -0.5; }
+    if (p.x > maxX) { p.x = maxX; p.vx *= -0.5; }
+    if (p.y < minY) { p.y = minY; p.vy *= -0.5; }
+    if (p.y > maxY) { p.y = maxY; p.vy *= -0.5; }
+
+    const r = 2 + heatRatio * 2.5;
+    ctx.fillStyle = baseCol;
+    ctx.globalAlpha = 0.4 + heatRatio * 0.4;
+    ctx.beginPath();
+    ctx.arc(p.x * W, p.y * H, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Steam above liquid if > 100
+  if (finalTemp > 95) {
+    const steamAlpha = Math.min((finalTemp - 95) / 20, 0.6);
+    for (let i = 0; i < 6; i++) {
+      const sx = bx + bw * 0.2 + Math.sin(explorerTime * 2 + i * 1.5) * bw * 0.25;
+      const sy = fy - 10 - Math.abs(Math.sin(explorerTime * 1.5 + i)) * 30;
+      ctx.fillStyle = `rgba(44,36,22,${steamAlpha * (0.15 + Math.random() * 0.2)})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 3 + Math.random() * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Beaker outline
+  ctx.strokeStyle = '#2c2416';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bw, bh, [0, 0, 4, 4]);
+  ctx.stroke();
+  // Beaker lip
+  ctx.beginPath();
+  ctx.moveTo(bx - 6, by); ctx.lineTo(bx + 8, by);
+  ctx.moveTo(bx + bw - 8, by); ctx.lineTo(bx + bw + 6, by);
+  ctx.stroke();
+
+  // Flame
+  if (explorerQ > 0) {
+    const flameIntensity = Math.min(explorerQ / 50000, 1);
+    drawFlame(ctx, W / 2, by + bh + 8, flameIntensity);
+  }
+
+  // Tick marks on beaker
+  ctx.fillStyle = 'rgba(44,36,22,0.3)';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'right';
+  for (let i = 1; i <= 4; i++) {
+    const ty = by + bh - (bh * i * 0.2);
+    ctx.fillRect(bx + 6, ty, 12, 1);
+  }
+}
+
+function drawFlame(ctx, cx, baseY, intensity) {
+  if (intensity < 0.01) return;
+  const t = explorerTime;
+  for (let i = 0; i < 5; i++) {
+    const offX = Math.sin(t * 4 + i * 1.3) * 8 * intensity;
+    const fx = cx - 20 + i * 10 + offX;
+    const fh = 10 + intensity * 20 + Math.sin(t * 5 + i) * 5 * intensity;
+
+    const grd = ctx.createLinearGradient(fx, baseY, fx, baseY - fh);
+    grd.addColorStop(0, `rgba(139,37,0,${0.7 * intensity})`);
+    grd.addColorStop(0.5, `rgba(180,90,20,${0.4 * intensity})`);
+    grd.addColorStop(1, 'rgba(245,238,214,0)');
+
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.moveTo(fx - 4, baseY);
+    ctx.quadraticCurveTo(fx - 2 + Math.sin(t * 3 + i) * 2, baseY - fh * 0.6, fx, baseY - fh);
+    ctx.quadraticCurveTo(fx + 2 + Math.sin(t * 3.5 + i) * 2, baseY - fh * 0.6, fx + 4, baseY);
+    ctx.fill();
+  }
+}
+
+// Explorer slider events
+document.getElementById('explorer-q').addEventListener('input', function() {
+  explorerQ = +this.value;
+  document.getElementById('explorer-q-val').textContent = fmtInt(explorerQ) + ' J';
+  updateExplorer();
+});
+document.getElementById('explorer-m').addEventListener('input', function() {
+  explorerM = +this.value;
+  document.getElementById('explorer-m-val').textContent = fmtInt(explorerM) + ' g';
+  updateExplorer();
+});
+
+// ============================================================
+// TAB 2: COMPARER
+// ============================================================
+let cmpMaterials = ['water', 'iron', 'copper'];
+let cmpQ = 10000, cmpM = 100;
+let cmpParticles = [[], [], []];
+
+function initCompare() {
+  for (let i = 0; i < 3; i++) {
+    const sel = document.getElementById('cmp-sel-' + i);
+    sel.innerHTML = MATERIALS.map(m =>
+      `<option value="${m.id}"${m.id === cmpMaterials[i] ? ' selected' : ''}>${m.name} (c = ${fmtC(m.c)})</option>`
+    ).join('');
+    sel.addEventListener('change', function() {
+      cmpMaterials[i] = this.value;
+      updateCompare();
+    });
+    // Init particles
+    cmpParticles[i] = [];
+    for (let j = 0; j < 25; j++) {
+      cmpParticles[i].push({ x: 0.15 + Math.random() * 0.7, y: 0.3 + Math.random() * 0.5, vx: 0, vy: 0 });
+    }
+  }
+}
+
+function updateCompare() {
+  let maxDT = 0;
+  const deltas = [];
+  for (let i = 0; i < 3; i++) {
+    const mat = MAT(cmpMaterials[i]);
+    const dT = calcDeltaT(cmpQ, cmpM, mat.c);
+    const finalT = INITIAL_TEMP + dT;
+    deltas.push({ mat, dT, finalT });
+    if (dT > maxDT) maxDT = dT;
+
+    document.getElementById('cmp-temp-' + i).textContent = fmtN(finalT) + ' \u00b0C';
+    document.getElementById('cmp-temp-' + i).style.color = mat.color;
+    document.getElementById('cmp-c-' + i).textContent = 'c = ' + fmtC(mat.c);
+  }
+
+  // Bars
+  const barsHtml = deltas.map((d, i) => {
+    const pct = maxDT > 0 ? Math.max(3, (d.dT / maxDT) * 100) : 0;
+    return `<div class="bar-group">
+      <div class="bar-label"><span class="name">${d.mat.name}</span><span class="val">+${fmtN(d.dT)} \u00b0C</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${d.mat.color}40;color:${d.mat.color}"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('compare-bars').innerHTML = barsHtml;
+
+  // Info
+  if (deltas.length >= 2) {
+    const sorted = [...deltas].sort((a, b) => a.dT - b.dT);
+    const slowest = sorted[0], fastest = sorted[sorted.length - 1];
+    const ratio = (fastest.dT / Math.max(slowest.dT, 0.01)).toFixed(1).replace('.', ',');
+    document.getElementById('compare-info').innerHTML =
+      `<strong>${fastest.mat.name}</strong> chauffe <strong>${ratio}x</strong> plus vite que ` +
+      `<strong>${slowest.mat.name}</strong> avec la m\u00eame \u00e9nergie!`;
+  }
+}
+
+function drawCompare() {
+  for (let i = 0; i < 3; i++) {
+    const canvas = document.getElementById('cmp-canvas-' + i);
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const mat = MAT(cmpMaterials[i]);
+    const dT = calcDeltaT(cmpQ, cmpM, mat.c);
+    const heatRatio = Math.min(dT / 80, 1);
+
+    const bx = W * 0.15, by = H * 0.08, bw = W * 0.7, bh = H * 0.7;
+    const fillH = bh * 0.65;
+    const fy = by + bh - fillH;
+
+    // Fill
+    ctx.fillStyle = mat.color;
+    ctx.globalAlpha = 0.3 + heatRatio * 0.3;
+    ctx.beginPath();
+    ctx.roundRect(bx + 2, fy, bw - 4, fillH - 2, [0, 0, 4, 4]);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Heat glow
+    if (heatRatio > 0.05) {
+      const grd = ctx.createLinearGradient(bx, by + bh, bx, fy);
+      grd.addColorStop(0, `rgba(139,37,0,${heatRatio * 0.3})`);
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.roundRect(bx + 2, fy, bw - 4, fillH - 2, [0, 0, 4, 4]);
+      ctx.fill();
+    }
+
+    // Particles
+    const speed = 0.3 + heatRatio * 2.5;
+    for (const p of cmpParticles[i]) {
+      p.vx += (Math.random() - 0.5) * speed * 0.3;
+      p.vy += (Math.random() - 0.5) * speed * 0.3;
+      p.vx *= 0.92; p.vy *= 0.92;
+      p.x += p.vx * 0.01; p.y += p.vy * 0.01;
+      if (p.x < 0.18) { p.x = 0.18; p.vx *= -0.5; }
+      if (p.x > 0.82) { p.x = 0.82; p.vx *= -0.5; }
+      const minY = fy / H, maxY = (by + bh - 4) / H;
+      if (p.y < minY) { p.y = minY; p.vy *= -0.5; }
+      if (p.y > maxY) { p.y = maxY; p.vy *= -0.5; }
+      ctx.fillStyle = mat.color;
+      ctx.globalAlpha = 0.4 + heatRatio * 0.4;
+      ctx.beginPath();
+      ctx.arc(p.x * W, p.y * H, 1.5 + heatRatio * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Beaker outline
+    ctx.strokeStyle = '#2c2416';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, [0, 0, 4, 4]);
+    ctx.stroke();
+    // Beaker lip
+    ctx.beginPath();
+    ctx.moveTo(bx - 4, by); ctx.lineTo(bx + 6, by);
+    ctx.moveTo(bx + bw - 6, by); ctx.lineTo(bx + bw + 4, by);
+    ctx.stroke();
+
+    // Flame
+    if (cmpQ > 0) {
+      const fi = Math.min(cmpQ / 50000, 1);
+      const t = explorerTime;
+      for (let j = 0; j < 3; j++) {
+        const offX = Math.sin(t * 4 + j * 1.5) * 5 * fi;
+        const fx = W / 2 - 8 + j * 8 + offX;
+        const fhh = 6 + fi * 12 + Math.sin(t * 5 + j) * 3 * fi;
+        const flameBase = by + bh + 5;
+        const grd = ctx.createLinearGradient(fx, flameBase, fx, flameBase - fhh);
+        grd.addColorStop(0, `rgba(139,37,0,${0.5 * fi})`);
+        grd.addColorStop(0.5, `rgba(180,90,20,${0.3 * fi})`);
+        grd.addColorStop(1, 'rgba(245,238,214,0)');
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.moveTo(fx - 3, flameBase);
+        ctx.quadraticCurveTo(fx, flameBase - fhh, fx + 3, flameBase);
+        ctx.fill();
+      }
+    }
+  }
+}
+
+document.getElementById('cmp-q').addEventListener('input', function() {
+  cmpQ = +this.value;
+  document.getElementById('cmp-q-val').textContent = fmtInt(cmpQ) + ' J';
+  updateCompare();
+});
+document.getElementById('cmp-m').addEventListener('input', function() {
+  cmpM = +this.value;
+  document.getElementById('cmp-m-val').textContent = fmtInt(cmpM) + ' g';
+  updateCompare();
+});
+
+// ============================================================
+// TAB 3: CALCULER
+// ============================================================
+let calcMode = 'deltaT';
+
+function setCalcMode(mode) {
+  calcMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(
+      mode === 'deltaT' ? 'δt' :
+      mode === 'Q' ? ' q' :
+      mode === 'm' ? ' m' : ' c'
+    ) || (mode === 'deltaT' && b.textContent.includes('\u0394T')) ||
+      (mode === 'Q' && b.textContent.includes('Q') && !b.textContent.includes('\u0394')) ||
+      (mode === 'm' && b.textContent.includes(' m') && !b.textContent.includes('c')) ||
+      (mode === 'c' && b.textContent.includes(' c') && !b.textContent.includes('m'))
+    );
+  });
+  // Simpler: just match by index
+  const modes = ['deltaT', 'Q', 'm', 'c'];
+  document.querySelectorAll('.mode-btn').forEach((b, i) => {
+    b.classList.toggle('active', modes[i] === mode);
+  });
+
+  // Enable/disable fields
+  ['Q', 'm', 'c', 'deltaT'].forEach(f => {
+    const input = document.getElementById('calc-' + f);
+    input.disabled = (f === mode);
+    input.parentElement.parentElement.style.opacity = (f === mode) ? '0.4' : '1';
+  });
+  updateCalc();
+}
+
+function buildPresets() {
+  document.getElementById('preset-row').innerHTML = MATERIALS.map(m =>
+    `<div class="preset-btn" data-id="${m.id}" onclick="selectPreset('${m.id}')">${m.name} ${fmtC(m.c)}</div>`
+  ).join('');
+}
+
+let activePreset = 'water';
+function selectPreset(id) {
+  activePreset = id;
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.id === id);
+  });
+  document.getElementById('calc-c').value = MAT(id).c;
+  updateCalc();
+}
+
+function parseCalcNum(id) {
+  const val = document.getElementById(id).value.replace(/[^0-9.,-]/g, '').replace(',', '.');
+  return parseFloat(val) || 0;
+}
+
+function updateCalc() {
+  const Q = parseCalcNum('calc-Q');
+  const m = parseCalcNum('calc-m');
+  const c = parseCalcNum('calc-c');
+  const dT = parseCalcNum('calc-deltaT');
+
+  let result, unit, steps, varName;
+
+  if (calcMode === 'deltaT') {
+    if (m <= 0 || c <= 0) { showCalcResult('--', '', 'Masse et c doivent \u00eatre > 0'); return; }
+    result = calcDeltaT(Q, m, c);
+    unit = '\u00b0C';
+    varName = '\u0394T';
+    steps = [
+      `\u0394T = Q \u00f7 (m \u00d7 c)`,
+      `\u0394T = ${fmtInt(Q)} \u00f7 (${fmtN(m, 0)} \u00d7 ${fmtC(c)})`,
+      `\u0394T = ${fmtInt(Q)} \u00f7 ${fmtN(m * c, 1)}`,
+    ];
+  } else if (calcMode === 'Q') {
+    result = calcQ(m, c, dT);
+    unit = 'J';
+    varName = 'Q';
+    steps = [
+      `Q = m \u00d7 c \u00d7 \u0394T`,
+      `Q = ${fmtN(m, 0)} \u00d7 ${fmtC(c)} \u00d7 ${fmtN(dT)}`,
+    ];
+  } else if (calcMode === 'm') {
+    if (c <= 0 || dT <= 0) { showCalcResult('--', '', 'c et \u0394T doivent \u00eatre > 0'); return; }
+    result = calcMass(Q, c, dT);
+    unit = 'g';
+    varName = 'm';
+    steps = [
+      `m = Q \u00f7 (c \u00d7 \u0394T)`,
+      `m = ${fmtInt(Q)} \u00f7 (${fmtC(c)} \u00d7 ${fmtN(dT)})`,
+      `m = ${fmtInt(Q)} \u00f7 ${fmtN(c * dT, 2)}`,
+    ];
+  } else {
+    if (m <= 0 || dT <= 0) { showCalcResult('--', '', 'm et \u0394T doivent \u00eatre > 0'); return; }
+    result = calcC(Q, m, dT);
+    unit = 'J/(g\u00b7\u00b0C)';
+    varName = 'c';
+    steps = [
+      `c = Q \u00f7 (m \u00d7 \u0394T)`,
+      `c = ${fmtInt(Q)} \u00f7 (${fmtN(m, 0)} \u00d7 ${fmtN(dT)})`,
+      `c = ${fmtInt(Q)} \u00f7 ${fmtN(m * dT, 1)}`,
+    ];
+  }
+
+  showCalcResult(varName + ' = ' + fmtN(result, 2) + ' ' + unit, steps.join('<br>'), getContext(calcMode, result));
+}
+
+function showCalcResult(resultLine, stepsHtml, contextHtml) {
+  document.getElementById('calc-steps').innerHTML =
+    (stepsHtml ? `<div class="step-line">${stepsHtml}</div>` : '') +
+    `<div class="step-line result" style="margin-top:12px">${resultLine}</div>`;
+  document.getElementById('calc-context').innerHTML = contextHtml ? `<strong>En contexte :</strong> ${contextHtml}` : '';
+  document.getElementById('calc-context').style.display = contextHtml ? '' : 'none';
+}
+
+function getContext(mode, value) {
+  if (mode === 'deltaT') {
+    if (value < 1) return "C'est un changement presque imperceptible.";
+    if (value < 10) return "Comme r\u00e9chauffer l\u00e9g\u00e8rement un verre d'eau.";
+    if (value < 50) return "Une douche bien chaude!";
+    if (value < 80) return "Attention, \u00e7a commence \u00e0 \u00eatre br\u00fblant!";
+    return "L'eau bout \u00e0 100 \u00b0C. C'est tr\u00e8s chaud!";
+  }
+  if (mode === 'Q') {
+    if (value < 1000) return "C'est l'\u00e9quivalent de quelques secondes de micro-ondes.";
+    if (value < 10000) return "Environ " + fmtN(value / 1000) + " kJ. Un petit bruleur pendant quelques secondes.";
+    return "C'est " + fmtN(value / 1000) + " kJ. Une bonne quantit\u00e9 d'\u00e9nergie!";
+  }
+  if (mode === 'c') {
+    const closest = MATERIALS.reduce((best, m) =>
+      Math.abs(m.c - value) < Math.abs(best.c - value) ? m : best
+    );
+    return `Cette valeur est proche de <strong>${closest.name}</strong> (c = ${fmtC(closest.c)}).`;
+  }
+  return '';
+}
+
+// Calc input events
+['calc-Q', 'calc-m', 'calc-c', 'calc-deltaT'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateCalc);
+});
+
+// ============================================================
+// TAB 4: DEFI (Quiz)
+// ============================================================
+const QUESTIONS = [
+  {
+    q: "Quel mat\u00e9riau chauffe le plus vite si on lui donne la m\u00eame quantit\u00e9 d'\u00e9nergie?",
+    options: ['Eau (c = 4,19)', 'Cuivre (c = 0,385)', 'Sable (c = 0,830)', 'Aluminium (c = 0,897)'],
+    answer: 1,
+    explain: "Le cuivre a la plus faible capacit\u00e9 thermique massique (0,385 J/(g\u00b7\u00b0C)). Il faut moins d'\u00e9nergie pour augmenter sa temp\u00e9rature. Moins de c = chauffe plus vite!"
+  },
+  {
+    q: "Pourquoi le sable du d\u00e9sert est br\u00fblant le jour et froid la nuit?",
+    options: [
+      'Sa faible capacit\u00e9 thermique (c bas)',
+      'Sa couleur jaune',
+      'Sa haute capacit\u00e9 thermique (c \u00e9lev\u00e9)',
+      'La gravit\u00e9 du d\u00e9sert'
+    ],
+    answer: 0,
+    explain: "Le sable a un c relativement bas (0,830 J/(g\u00b7\u00b0C)). Il absorbe et perd la chaleur rapidement. L'eau (c = 4,19), elle, stabilise la temp\u00e9rature pr\u00e8s des c\u00f4tes."
+  },
+  {
+    q: "La formule Q = mc\u0394T : que repr\u00e9sente le \u0394T?",
+    options: [
+      "La temp\u00e9rature finale",
+      "La diff\u00e9rence de temp\u00e9rature (T\u2082 - T\u2081)",
+      "La temp\u00e9rature en degr\u00e9s Kelvin",
+      "Le temps de chauffage"
+    ],
+    answer: 1,
+    explain: "\u0394T (delta T) est la variation de temp\u00e9rature, c'est-\u00e0-dire la diff\u00e9rence entre la temp\u00e9rature finale et la temp\u00e9rature initiale."
+  },
+  {
+    q: "On chauffe 200 g d'eau (c = 4,19) avec 4 190 J. Quel est le \u0394T?",
+    options: ['2,5 \u00b0C', '5 \u00b0C', '10 \u00b0C', '20 \u00b0C'],
+    answer: 1,
+    explain: "\u0394T = Q \u00f7 (m \u00d7 c) = 4 190 \u00f7 (200 \u00d7 4,19) = 4 190 \u00f7 838 = 5 \u00b0C"
+  },
+  {
+    q: "Quel mat\u00e9riau gardera sa chaleur le plus longtemps?",
+    options: ['Cuivre (c = 0,385)', 'Fer (c = 0,449)', 'Eau (c = 4,19)', 'Sable (c = 0,830)'],
+    answer: 2,
+    explain: "L'eau a le c le plus \u00e9lev\u00e9 (4,19). Elle accumule beaucoup d'\u00e9nergie et la lib\u00e8re lentement. C'est pourquoi une bouillotte reste chaude longtemps!"
+  },
+  {
+    q: "Combien d'\u00e9nergie faut-il pour chauffer 500 g de fer (c = 0,449) de 20 \u00b0C?",
+    options: ['449 J', '2 245 J', '4 490 J', '8 980 J'],
+    answer: 2,
+    explain: "Q = m \u00d7 c \u00d7 \u0394T = 500 \u00d7 0,449 \u00d7 20 = 4 490 J"
+  },
+  {
+    q: "Les villes c\u00f4ti\u00e8res ont des temp\u00e9ratures plus stables que l'int\u00e9rieur des terres. Pourquoi?",
+    options: [
+      "Le vent est plus fort en ville",
+      "L'oc\u00e9an a une capacit\u00e9 thermique \u00e9lev\u00e9e",
+      "L'altitude est plus basse",
+      "Il y a plus de b\u00e2timents"
+    ],
+    answer: 1,
+    explain: "L'eau de l'oc\u00e9an (c = 4,19 J/(g\u00b7\u00b0C)) absorbe \u00e9norm\u00e9ment de chaleur l'\u00e9t\u00e9 et la rel\u00e2che l'hiver, mod\u00e9rant ainsi les temp\u00e9ratures c\u00f4ti\u00e8res."
+  },
+  {
+    q: "On donne 1 000 J \u00e0 100 g de deux substances. L'une augmente de 2,4 \u00b0C, l'autre de 26 \u00b0C. Laquelle est l'eau?",
+    options: [
+      "Celle qui augmente de 2,4 \u00b0C",
+      "Celle qui augmente de 26 \u00b0C",
+      "Les deux pourraient \u00eatre de l'eau",
+      "Aucune des deux"
+    ],
+    answer: 0,
+    explain: "L'eau a un c \u00e9lev\u00e9 (4,19), donc elle chauffe peu : \u0394T = 1 000 \u00f7 (100 \u00d7 4,19) \u2248 2,4 \u00b0C. L'autre substance est probablement du cuivre (\u2248 26 \u00b0C)."
+  },
+  {
+    q: "Si on double la masse d'un objet et qu'on lui donne la m\u00eame \u00e9nergie, que se passe-t-il avec le \u0394T?",
+    options: [
+      "Il double",
+      "Il reste le m\u00eame",
+      "Il est divis\u00e9 par deux",
+      "Il est multipli\u00e9 par quatre"
+    ],
+    answer: 2,
+    explain: "\u0394T = Q \u00f7 (m \u00d7 c). Si m double, \u0394T est divis\u00e9 par 2. Plus il y a de mati\u00e8re, moins la temp\u00e9rature augmente pour la m\u00eame \u00e9nergie."
+  },
+  {
+    q: "Un chef utilise une casserole en cuivre plut\u00f4t qu'en acier. Pourquoi, en termes de capacit\u00e9 thermique?",
+    options: [
+      "Le cuivre est plus joli",
+      "Le cuivre a un c plus bas : il chauffe et r\u00e9agit plus vite",
+      "Le cuivre a un c plus \u00e9lev\u00e9 : il garde mieux la chaleur",
+      "La couleur du cuivre cuit mieux les aliments"
+    ],
+    answer: 1,
+    explain: "Le cuivre (c = 0,385 J/(g\u00b7\u00b0C)) r\u00e9pond tr\u00e8s vite aux changements de temp\u00e9rature. Le chef peut ajuster la cuisson avec pr\u00e9cision. C'est l'avantage d'un c bas!"
+  },
+];
+
+let quizIndex = 0, quizScore = 0, quizAnswered = false;
+
+function renderQuiz() {
+  if (quizIndex >= QUESTIONS.length) {
+    renderFinalScore();
+    return;
+  }
+  const q = QUESTIONS[quizIndex];
+  quizAnswered = false;
+
+  document.getElementById('quiz-progress').style.width = ((quizIndex / QUESTIONS.length) * 100) + '%';
+  document.getElementById('quiz-score').textContent = quizScore + ' / ' + quizIndex;
+
+  document.getElementById('quiz-container').innerHTML =
+    `<div class="question-card">
+      <div class="question-number">Question ${quizIndex + 1} / ${QUESTIONS.length}</div>
+      <div class="question-text">${q.q}</div>
+      <div id="quiz-options">
+        ${q.options.map((opt, i) =>
+          `<button class="answer-btn" onclick="answerQuiz(${i})">${opt}</button>`
+        ).join('')}
+      </div>
+      <div class="feedback-box" id="quiz-feedback"></div>
+    </div>`;
+}
+
+function answerQuiz(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const q = QUESTIONS[quizIndex];
+  const correct = idx === q.answer;
+  if (correct) quizScore++;
+
+  const btns = document.querySelectorAll('#quiz-options .answer-btn');
+  btns.forEach((b, i) => {
+    b.classList.add('locked');
+    if (i === q.answer) b.classList.add(correct ? 'correct' : 'reveal');
+    if (i === idx && !correct) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.className = 'feedback-box show ' + (correct ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = (correct ? '<strong>Bonne r\u00e9ponse!</strong> ' : '<strong>Pas tout \u00e0 fait!</strong> ') + q.explain +
+    `<br><button class="next-btn" onclick="nextQuiz()">${quizIndex < QUESTIONS.length - 1 ? 'Suivante' : 'Voir le r\u00e9sultat'}</button>`;
+
+  document.getElementById('quiz-score').textContent = quizScore + ' / ' + (quizIndex + 1);
+}
+
+function nextQuiz() {
+  quizIndex++;
+  renderQuiz();
+}
+
+function renderFinalScore() {
+  document.getElementById('quiz-progress').style.width = '100%';
+  document.getElementById('quiz-score').textContent = quizScore + ' / ' + QUESTIONS.length;
+
+  const pct = Math.round((quizScore / QUESTIONS.length) * 100);
+  let msg = 'Continue \u00e0 pratiquer!';
+  if (pct >= 90) msg = 'Excellent! Tu ma\u00eetrises la capacit\u00e9 thermique!';
+  else if (pct >= 70) msg = 'Tr\u00e8s bien! Encore un petit effort.';
+  else if (pct >= 50) msg = 'Pas mal! Retourne explorer pour consolider.';
+
+  document.getElementById('quiz-container').innerHTML =
+    `<div class="question-card final-card">
+      <div class="final-score">${quizScore}/${QUESTIONS.length}</div>
+      <div class="final-msg">${msg}</div>
+      <button class="next-btn" onclick="resetQuiz()">Recommencer</button>
+    </div>`;
+}
+
+function resetQuiz() {
+  quizIndex = 0; quizScore = 0;
+  renderQuiz();
+}
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+function animate() {
+  explorerTime += 0.016;
+  if (activeTab === 'explorer') drawExplorer();
+  if (activeTab === 'comparer') drawCompare();
+  requestAnimationFrame(animate);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  buildMatGrid('mat-grid-explorer', explorerMat, 'selectExplorerMat');
+  initExplorerParticles();
+  updateExplorer();
+  updateExplorerInfo();
+  initCompare();
+  updateCompare();
+  buildPresets();
+  selectPreset('water');
+  setCalcMode('deltaT');
+  renderQuiz();
+  animate();
+}
+
+init();
+</script>
+
+</body>
+</html>
