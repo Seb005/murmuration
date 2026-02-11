@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trikafta — Mecanisme d'action | Labo Kodra</title>
+  <meta name="description" content="Visualisation interactive du mecanisme d'action de Trikafta (elexacaftor/tezacaftor/ivacaftor) pour la fibrose kystique." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #111827;
+      --bg3: #1a2035;
+      --text: #f0f4ff;
+      --text2: #94a3b8;
+      --muted: #64748b;
+      --elx: #f472b6;
+      --tez: #60a5fa;
+      --iva: #34d399;
+      --cftr: #a78bfa;
+      --cl: #38bdf8;
+      --membrane: #fbbf24;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+
+    /* Nav bar — coherent with labo */
+    .topbar { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 16px 24px; }
+    .topbar-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-left img { height: 22px; opacity: 0.7; }
+    .topbar-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.1); }
+    .topbar-badge { font-family: monospace; font-size: 12px; color: #6b7280; letter-spacing: 0.05em; }
+    .back-link { font-family: monospace; font-size: 12px; color: #6b7280; text-decoration: none; transition: color 0.2s; display: flex; align-items: center; gap: 6px; }
+    .back-link:hover { color: #F97316; }
+    .back-link svg { width: 14px; height: 14px; }
+
+    /* Layout */
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    .header { text-align: center; margin-bottom: 2.5rem; }
+    .header h1 { font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--elx), var(--tez), var(--iva)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
+    .header .sub { font-size: 1rem; color: var(--text2); font-weight: 300; }
+
+    /* Steps */
+    .step-nav { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .step-btn { padding: 0.6rem 1.3rem; border: 2px solid var(--muted); border-radius: 50px; background: transparent; color: var(--text2); font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+    .step-btn:hover { border-color: var(--text2); color: var(--text); }
+    .step-btn.active { color: #fff; border-color: transparent; }
+    .step-btn[data-s="0"].active { background: linear-gradient(135deg,#ef4444,#dc2626); }
+    .step-btn[data-s="1"].active { background: linear-gradient(135deg,var(--elx),#ec4899); }
+    .step-btn[data-s="2"].active { background: linear-gradient(135deg,var(--tez),#3b82f6); }
+    .step-btn[data-s="3"].active { background: linear-gradient(135deg,var(--iva),#10b981); }
+    .step-btn[data-s="4"].active { background: linear-gradient(135deg,var(--elx),var(--tez),var(--iva)); }
+
+    /* Main grid */
+    .main { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+
+    .viz { background: var(--bg2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); overflow: hidden; }
+    .viz svg { width: 100%; height: auto; display: block; }
+
+    .panel { background: var(--bg3); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); padding: 1.5rem; position: sticky; top: 1.5rem; }
+    .panel h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .panel .desc { color: var(--text2); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.2rem; }
+    .badge-row { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .mol-badge { display: inline-flex; align-items: center; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .mol-badge.elx { background: rgba(244,114,182,0.15); color: var(--elx); border: 1px solid rgba(244,114,182,0.3); }
+    .mol-badge.tez { background: rgba(96,165,250,0.15); color: var(--tez); border: 1px solid rgba(96,165,250,0.3); }
+    .mol-badge.iva { background: rgba(52,211,153,0.15); color: var(--iva); border: 1px solid rgba(52,211,153,0.3); }
+    .kp { display: flex; align-items: flex-start; gap: 0.7rem; padding: 0.6rem 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .kp .ic { font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+    .kp .tx { font-size: 0.85rem; color: var(--text2); line-height: 1.5; }
+    .kp .tx strong { color: var(--text); }
+
+    /* Legend */
+    .legend { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 1.5rem; padding: 1rem; background: var(--bg3); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text2); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .footer-note { text-align: center; margin-top: 2rem; color: var(--muted); font-size: 0.78rem; }
+
+    /* Animations */
+    @keyframes fl { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+    @keyframes fl2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+    .af { animation: fl 3s ease-in-out infinite; }
+    .af2 { animation: fl2 3s ease-in-out 1s infinite; }
+
+    @media (max-width: 640px) {
+      .page { padding: 1rem; }
+      .header h1 { font-size: 1.5rem; }
+      .step-btn { padding: 0.4rem 0.9rem; font-size: 0.78rem; }
+      .panel { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <img src="https://kodra.ca/logo.png" alt="Kodra" />
+      <div class="topbar-divider"></div>
+      <span class="topbar-badge">labo / trikafta</span>
+    </div>
+    <a href="/" class="back-link">
+      <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+      Retour au labo
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+  <header class="header">
+    <h1>Trikafta : M&eacute;canisme d'action</h1>
+    <p class="sub">Visualisation interactive de la triple th&eacute;rapie contre la fibrose kystique</p>
+  </header>
+
+  <nav class="step-nav" id="nav"></nav>
+
+  <div class="main">
+    <div class="viz">
+      <svg id="svg" viewBox="0 0 800 550" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gM" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fbbf24" stop-opacity="0.9"/><stop offset="50%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706" stop-opacity="0.9"/></linearGradient>
+          <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.6"/><stop offset="100%" stop-color="#0f172a" stop-opacity="0.9"/></linearGradient>
+          <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0f172a" stop-opacity="0.5"/><stop offset="100%" stop-color="#1e1b4b" stop-opacity="0.3"/></linearGradient>
+          <radialGradient id="rCftr" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#a78bfa" stop-opacity="0.6"/><stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/></radialGradient>
+          <radialGradient id="rElx" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f472b6" stop-opacity="0.5"/><stop offset="100%" stop-color="#f472b6" stop-opacity="0"/></radialGradient>
+          <radialGradient id="rIva" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#34d399" stop-opacity="0.5"/><stop offset="100%" stop-color="#34d399" stop-opacity="0"/></radialGradient>
+        </defs>
+        <g id="scene"></g>
+      </svg>
+    </div>
+    <aside class="panel" id="panel"></aside>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> Prot&eacute;ine CFTR</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div> Elexacaftor</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div> Tezacaftor</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> Ivacaftor</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div> Ions Cl⁻</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Membrane</div>
+  </div>
+
+  <p class="footer-note">Visualisation &eacute;ducative &mdash; ne constitue pas un avis m&eacute;dical.</p>
+</div>
+
+<script>
+/* ── Data ── */
+const S=[
+{id:'problem',label:'Le probl\u00e8me',title:'Fibrose kystique : la prot\u00e9ine CFTR d\u00e9fectueuse',desc:'La mutation F508del emp\u00eache la prot\u00e9ine CFTR de se replier correctement. Elle reste pi\u00e9g\u00e9e dans le r\u00e9ticulum endoplasmique et n\u2019atteint pas la membrane cellulaire. Sans canal CFTR fonctionnel, le chlorure ne circule pas et le mucus devient \u00e9pais et collant.',badges:[],pts:[
+{i:'\ud83e\uddec',t:'<strong>Mutation F508del</strong> \u2014 la plus courante (~90\u00a0% des patients FK)'},
+{i:'\u274c',t:'<strong>CFTR mal repli\u00e9e</strong> \u2014 d\u00e9grad\u00e9e avant d\u2019atteindre la surface'},
+{i:'\ud83e\udec1',t:'<strong>Mucus \u00e9pais</strong> \u2014 obstruction des voies respiratoires'}]},
+{id:'elexacaftor',label:'Elexacaftor',title:'\u00c9tape 1 : Elexacaftor (Correcteur)',desc:'L\u2019elexacaftor se lie \u00e0 l\u2019interface TMD1-TMD2 de la prot\u00e9ine CFTR mut\u00e9e, stabilisant son repliement 3D. Cela emp\u00eache sa d\u00e9gradation pr\u00e9matur\u00e9e par le contr\u00f4le qualit\u00e9 cellulaire.',badges:['elx'],pts:[
+{i:'\ud83d\udd27',t:'<strong>Correcteur de type I</strong> \u2014 se lie \u00e0 l\u2019interface TMD1-TMD2'},
+{i:'\ud83d\udcd0',t:'<strong>Stabilise le repliement</strong> \u2014 bonne conformation 3D'},
+{i:'\ud83d\udee1\ufe0f',t:'<strong>Emp\u00eache la d\u00e9gradation</strong> \u2014 la prot\u00e9ine survit au contr\u00f4le qualit\u00e9'}]},
+{id:'tezacaftor',label:'Tezacaftor',title:'\u00c9tape 2 : Tezacaftor (Correcteur)',desc:'Le tezacaftor se lie \u00e0 un site diff\u00e9rent (TMD1), offrant un effet additif avec l\u2019elexacaftor. Ensemble, ils am\u00e9liorent consid\u00e9rablement le transport de CFTR du r\u00e9ticulum endoplasmique vers la membrane.',badges:['elx','tez'],pts:[
+{i:'\ud83d\udd29',t:'<strong>Correcteur de type II</strong> \u2014 se lie au domaine TMD1'},
+{i:'\ud83e\udd1d',t:'<strong>Effet synergique</strong> \u2014 compl\u00e9mentaire \u00e0 l\u2019elexacaftor'},
+{i:'\ud83d\ude80',t:'<strong>Transport am\u00e9lior\u00e9</strong> \u2014 davantage de CFTR atteint la surface'}]},
+{id:'ivacaftor',label:'Ivacaftor',title:'\u00c9tape 3 : Ivacaftor (Potentiateur)',desc:'Une fois les prot\u00e9ines CFTR corrig\u00e9es \u00e0 la membrane, l\u2019ivacaftor augmente leur probabilit\u00e9 d\u2019ouverture. Le canal s\u2019ouvre plus longtemps, laissant passer les ions chlorure.',badges:['iva'],pts:[
+{i:'\ud83d\udd13',t:'<strong>Potentiateur</strong> \u2014 augmente le temps d\u2019ouverture du canal'},
+{i:'\u26a1',t:'<strong>Flux ionique restaur\u00e9</strong> \u2014 le chlorure traverse la membrane'},
+{i:'\ud83d\udca7',t:'<strong>Hydratation</strong> \u2014 l\u2019eau suit le chlorure, fluidifiant le mucus'}]},
+{id:'result',label:'R\u00e9sultat',title:'Triple th\u00e9rapie : le r\u00e9sultat combin\u00e9',desc:'Les trois composantes agissent ensemble pour corriger, transporter et activer CFTR. R\u00e9sultat : mucus plus fluide, meilleure fonction pulmonaire, moins d\u2019infections. Une avanc\u00e9e majeure pour ~90\u00a0% des patients FK.',badges:['elx','tez','iva'],pts:[
+{i:'\u2705',t:'<strong>+14\u00a0% de VEMS</strong> \u2014 am\u00e9lioration significative de la fonction pulmonaire'},
+{i:'\ud83d\udcc9',t:'<strong>\u221263\u00a0% d\u2019exacerbations</strong> \u2014 moins de crises respiratoires'},
+{i:'\ud83c\udfaf',t:'<strong>~90\u00a0% des patients</strong> \u2014 \u00e9ligibles (mutation F508del)'}]}
+];
+
+let cur=0;
+const $=s=>document.querySelector(s);
+const nav=$('#nav'), scene=$('#scene'), panel=$('#panel');
+
+function init(){
+  nav.innerHTML=S.map((s,i)=>`<button class="step-btn" data-s="${i}">${s.label}</button>`).join('');
+  nav.addEventListener('click',e=>{const b=e.target.closest('.step-btn');if(b)go(+b.dataset.s);});
+  go(0);
+}
+
+function go(i){
+  cur=i;
+  nav.querySelectorAll('.step-btn').forEach(b=>b.classList.toggle('active',+b.dataset.s===i));
+  scene.innerHTML=[scProblem,scElx,scTez,scIva,scResult][i]();
+  renderPanel(i);
+}
+
+function renderPanel(i){
+  const d=S[i], colors=['#ef4444','#f472b6','#60a5fa','#34d399','#a78bfa'];
+  const badgeMap={elx:['Elexacaftor','elx'],tez:['Tezacaftor','tez'],iva:['Ivacaftor','iva']};
+  let bh=d.badges.length?'<div class="badge-row">'+d.badges.map(b=>`<span class="mol-badge ${badgeMap[b][1]}">${badgeMap[b][0]}</span>`).join('')+'</div>':'';
+  panel.innerHTML=`<h2 style="color:${colors[i]}">${d.title}</h2>${bh}<p class="desc">${d.desc}</p>${d.pts.map(p=>`<div class="kp"><span class="ic">${p.i}</span><span class="tx">${p.t}</span></div>`).join('')}`;
+}
+
+/* ── SVG helpers ── */
+function h2r(h){return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)].join(',');}
+
+function base(mo,mc,ml){
+  let ph='';
+  for(let x=30;x<800;x+=28){if(x>340&&x<460)continue;
+    ph+=`<circle cx="${x}" cy="228" r="5" fill="#fde68a" opacity="0.5"/><line x1="${x}" y1="233" x2="${x}" y2="250" stroke="#fde68a" stroke-width="1.5" opacity="0.3"/><circle cx="${x}" cy="282" r="5" fill="#fde68a" opacity="0.5"/><line x1="${x}" y1="277" x2="${x}" y2="260" stroke="#fde68a" stroke-width="1.5" opacity="0.3"/>`;}
+  return `<rect x="0" y="0" width="800" height="230" fill="url(#gE)"/><text x="400" y="30" text-anchor="middle" fill="#64748b" font-size="13" font-family="Inter">ESPACE EXTRACELLULAIRE (surface des voies respiratoires)</text><rect x="0" y="40" width="800" height="80" fill="rgba(${h2r(mc)},${mo})"/><text x="400" y="85" text-anchor="middle" fill="#${mc}" font-size="12" font-family="Inter" opacity="0.8">${ml}</text><rect x="0" y="225" width="800" height="60" fill="url(#gM)" rx="4"/>${ph}<text x="50" y="260" fill="#78350f" font-size="11" font-family="Inter" font-weight="600">MEMBRANE CELLULAIRE</text><rect x="0" y="285" width="800" height="265" fill="url(#gC)"/><text x="400" y="540" text-anchor="middle" fill="#64748b" font-size="13" font-family="Inter">CYTOPLASME (int\u00e9rieur de la cellule)</text>`;
+}
+
+function cl(x,y,o){return `<g transform="translate(${x},${y})" opacity="${o||1}"><circle cx="8" cy="8" r="8" fill="#38bdf8" opacity="0.8"/><text x="8" y="12" text-anchor="middle" fill="#fff" font-size="7" font-weight="700" font-family="Inter">Cl\u207b</text></g>`;}
+function w(x,y,o){return `<g transform="translate(${x},${y})" opacity="${o||1}"><circle cx="6" cy="6" r="5" fill="#7dd3fc" opacity="0.6"/><circle cx="14" cy="3" r="3" fill="#bae6fd" opacity="0.5"/><circle cx="14" cy="10" r="3" fill="#bae6fd" opacity="0.5"/></g>`;}
+
+function emptyChannel(){return `<g transform="translate(370,220)"><rect x="0" y="0" width="60" height="65" rx="6" fill="#1f2937" stroke="#4b5563" stroke-width="2" stroke-dasharray="4,3"/><text x="30" y="36" text-anchor="middle" fill="#6b7280" font-size="9" font-family="Inter">Canal</text><text x="30" y="48" text-anchor="middle" fill="#6b7280" font-size="9" font-family="Inter">absent</text></g>`;}
+
+function infoBox(x,y,w2,h,bg,border,lines){
+  let out=`<g transform="translate(${x},${y})"><rect x="0" y="0" width="${w2}" height="${h}" rx="12" fill="${bg}" stroke="${border}" stroke-width="1"/>`;
+  lines.forEach((l,i)=>{out+=`<text x="${w2/2}" y="${22+i*16}" text-anchor="middle" fill="${l[1]}" font-size="${l[2]||10}" font-family="Inter" ${l[3]||''}>${l[0]}</text>`;});
+  return out+'</g>';
+}
+
+function workingCh(x,y){return `<g transform="translate(${x},${y})"><rect x="0" y="0" width="60" height="65" rx="6" fill="#3b2d70" stroke="#a78bfa" stroke-width="2"/><rect x="20" y="4" width="20" height="57" rx="3" fill="#0f172a" stroke="#34d399" stroke-width="1"/><circle cx="-3" cy="15" r="6" fill="#f472b6" opacity="0.8"/><circle cx="-3" cy="50" r="6" fill="#60a5fa" opacity="0.8"/><circle cx="63" cy="32" r="6" fill="#34d399" opacity="0.8"/></g>`;}
+
+/* ── Scenes ── */
+function scProblem(){return base(0.35,'ef4444','Mucus \u00e9pais et collant')+`
+<g transform="translate(350,380)"><circle cx="50" cy="50" r="45" fill="url(#rCftr)"/>
+<path d="M25,30 Q35,15 50,25 Q65,10 75,30 Q85,50 70,60 Q80,75 65,80 Q50,90 35,80 Q20,75 30,60 Q15,50 25,30Z" fill="#6b7280" stroke="#4b5563" stroke-width="2" opacity="0.8"/>
+<text x="50" y="55" text-anchor="middle" fill="#fff" font-size="9" font-weight="600" font-family="Inter">CFTR</text>
+<text x="50" y="68" text-anchor="middle" fill="#fca5a5" font-size="8" font-family="Inter">Mal repli\u00e9e</text>
+<line x1="72" y1="15" x2="88" y2="31" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+<line x1="88" y1="15" x2="72" y2="31" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/></g>
+<g transform="translate(290,340)"><rect x="0" y="0" width="220" height="30" rx="15" fill="rgba(107,114,128,0.2)" stroke="#6b7280" stroke-width="1"/><text x="110" y="20" text-anchor="middle" fill="#9ca3af" font-size="11" font-family="Inter">R\u00e9ticulum Endoplasmique</text></g>
+<g transform="translate(460,410)" opacity="0.8"><line x1="0" y1="0" x2="60" y2="30" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,3"/><polygon points="60,30 50,24 54,34" fill="#ef4444"/><text x="70" y="35" fill="#fca5a5" font-size="10" font-family="Inter">D\u00e9gradation</text></g>
+${emptyChannel()}
+<g transform="translate(350,150)">${cl(0,0,0.5)}${cl(35,-10,0.4)}${cl(65,5,0.5)}${cl(95,-5,0.3)}<text x="50" y="35" text-anchor="middle" fill="#7dd3fc" font-size="9" font-family="Inter">Cl\u207b bloqu\u00e9s</text></g>
+${infoBox(100,380,160,70,'rgba(239,68,68,0.1)','rgba(239,68,68,0.3)',[['Cons\u00e9quences :','#fca5a5',11,'font-weight="600"'],['Infections pulmonaires','#9ca3af'],['Inflammation chronique','#9ca3af']])}
+`;}
+
+function scElx(){return base(0.3,'ef4444','Mucus encore \u00e9pais')+`
+<g transform="translate(320,370)"><circle cx="60" cy="55" r="55" fill="url(#rCftr)" opacity="0.4"/>
+<path d="M30,35 Q42,20 60,28 Q78,20 88,38 Q95,55 82,65 Q90,78 75,82 Q60,88 45,82 Q30,78 38,65 Q22,55 30,35Z" fill="#8b7cc8" stroke="#a78bfa" stroke-width="2.5"/>
+<text x="60" y="55" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" font-family="Inter">CFTR</text>
+<text x="60" y="68" text-anchor="middle" fill="#c4b5fd" font-size="8" font-family="Inter">En correction...</text>
+<g transform="translate(85,15)" class="af"><circle cx="18" cy="18" r="22" fill="url(#rElx)"/><circle cx="18" cy="18" r="14" fill="#f472b6" stroke="#ec4899" stroke-width="2"/><text x="18" y="22" text-anchor="middle" fill="#fff" font-size="7" font-weight="700" font-family="Inter">ELX</text></g>
+<path d="M96,38 Q108,38 103,33" fill="none" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="3,2"/></g>
+<g transform="translate(270,335)"><rect x="0" y="0" width="260" height="30" rx="15" fill="rgba(244,114,182,0.1)" stroke="#f472b6" stroke-width="1"/><text x="130" y="20" text-anchor="middle" fill="#f472b6" font-size="11" font-family="Inter">R\u00e9ticulum Endoplasmique \u2014 Correction en cours</text></g>
+${infoBox(520,360,200,90,'rgba(244,114,182,0.08)','rgba(244,114,182,0.3)',[['Site de liaison','#f472b6',11,'font-weight="600"'],['Interface TMD1-TMD2','#9ca3af'],['Stabilise la conformation','#9ca3af'],['3D de la prot\u00e9ine','#9ca3af']])}
+${emptyChannel()}
+<g transform="translate(350,150)">${cl(0,0,0.5)}${cl(40,-8,0.4)}${cl(80,5,0.45)}</g>
+`;}
+
+function scTez(){return base(0.25,'ef4444','Mucus encore \u00e9pais')+`
+<g transform="translate(345,310)"><ellipse cx="55" cy="25" rx="52" ry="28" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="4,3"/><text x="55" y="0" text-anchor="middle" fill="#60a5fa" font-size="10" font-family="Inter">Transport v\u00e9siculaire</text>
+<line x1="55" y1="-10" x2="55" y2="-50" stroke="#60a5fa" stroke-width="2"/></g>
+<g transform="translate(355,315)" class="af">
+<path d="M20,18 Q32,8 45,14 Q58,8 65,20 Q70,32 60,40 Q66,50 55,54 Q45,58 35,54 Q24,50 30,40 Q18,32 20,18Z" fill="#9580d1" stroke="#a78bfa" stroke-width="2.5"/>
+<text x="43" y="33" text-anchor="middle" fill="#fff" font-size="9" font-weight="600" font-family="Inter">CFTR</text>
+<text x="43" y="44" text-anchor="middle" fill="#c4b5fd" font-size="7" font-family="Inter">Corrig\u00e9e</text>
+<circle cx="68" cy="14" r="10" fill="#f472b6" stroke="#ec4899" stroke-width="1.5"/><text x="68" y="18" text-anchor="middle" fill="#fff" font-size="6" font-weight="700" font-family="Inter">ELX</text>
+<circle cx="15" cy="38" r="10" fill="#60a5fa" stroke="#3b82f6" stroke-width="1.5"/><text x="15" y="42" text-anchor="middle" fill="#fff" font-size="6" font-weight="700" font-family="Inter">TEZ</text></g>
+<g transform="translate(370,222)"><rect x="0" y="0" width="60" height="65" rx="6" fill="#2d1f5e" stroke="#a78bfa" stroke-width="2" opacity="0.6"/><text x="30" y="36" text-anchor="middle" fill="#a78bfa" font-size="9" font-family="Inter" opacity="0.7">CFTR</text><text x="30" y="48" text-anchor="middle" fill="#a78bfa" font-size="8" font-family="Inter" opacity="0.5">en route...</text></g>
+${infoBox(520,350,200,105,'rgba(96,165,250,0.08)','rgba(96,165,250,0.3)',[['Double correction','#60a5fa',11,'font-weight="600"'],['ELX : interface TMD1-TMD2','#9ca3af'],['TEZ : domaine TMD1','#9ca3af'],['','rgba(255,255,255,0.1)'],['= Effet synergique','#60a5fa'],['sur le trafic cellulaire','#9ca3af',9]])}
+<g transform="translate(350,150)">${cl(0,0,0.5)}${cl(40,-8,0.4)}${cl(80,5,0.45)}</g>
+${infoBox(80,420,180,55,'rgba(96,165,250,0.08)','rgba(96,165,250,0.2)',[['D\u00e9part: R\u00e9t. Endoplasmique','#60a5fa',10,'font-weight="500"'],['\u2192 Golgi \u2192 Membrane','#9ca3af',9]])}
+`;}
+
+function scIva(){return base(0.15,'34d399','Mucus en cours de fluidification')+`
+<g transform="translate(360,215)">
+<rect x="0" y="0" width="80" height="75" rx="8" fill="#3b2d70" stroke="#a78bfa" stroke-width="2.5"/>
+<rect x="28" y="5" width="24" height="65" rx="4" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
+<circle cx="-5" cy="20" r="9" fill="#f472b6" stroke="#ec4899" stroke-width="1.5"/><text x="-5" y="23" text-anchor="middle" fill="#fff" font-size="5.5" font-weight="700" font-family="Inter">ELX</text>
+<circle cx="-5" cy="55" r="9" fill="#60a5fa" stroke="#3b82f6" stroke-width="1.5"/><text x="-5" y="58" text-anchor="middle" fill="#fff" font-size="5.5" font-weight="700" font-family="Inter">TEZ</text>
+<g class="af"><circle cx="85" cy="37" r="12" fill="url(#rIva)"/><circle cx="85" cy="37" r="9" fill="#34d399" stroke="#10b981" stroke-width="1.5"/><text x="85" y="40" text-anchor="middle" fill="#fff" font-size="5.5" font-weight="700" font-family="Inter">IVA</text></g>
+<text x="40" y="-8" text-anchor="middle" fill="#a78bfa" font-size="10" font-family="Inter" font-weight="600">CFTR</text>
+<text x="40" y="-20" text-anchor="middle" fill="#34d399" font-size="9" font-family="Inter">Canal OUVERT</text></g>
+<g><g class="af">${cl(385,145,0.9)}</g><g class="af2">${cl(395,175,0.8)}</g><g class="af">${cl(390,250,0.85)}</g><g class="af2">${cl(397,300,0.7)}</g>
+<line x1="400" y1="130" x2="400" y2="200" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+<line x1="400" y1="300" x2="400" y2="350" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/></g>
+<g transform="translate(430,150)">${w(0,0,0.6)}${w(20,20,0.5)}${w(-10,35,0.4)}<text x="30" y="55" fill="#7dd3fc" font-size="8" font-family="Inter">H\u2082O suit Cl\u207b</text></g>
+${infoBox(520,350,210,100,'rgba(52,211,153,0.08)','rgba(52,211,153,0.3)',[['Ivacaftor \u2014 Potentiateur','#34d399',11,'font-weight="600"'],['Augmente la probabilit\u00e9','#9ca3af'],['d\u2019ouverture du canal','#9ca3af'],['','rgba(255,255,255,0.1)'],['\u2192 Flux de Cl\u207b restaur\u00e9','#34d399']])}
+${infoBox(80,370,180,70,'rgba(52,211,153,0.08)','rgba(52,211,153,0.2)',[['M\u00e9canisme','#34d399',10,'font-weight="500"'],['Cl\u207b sort de la cellule','#9ca3af',9],['\u2192 H\u2082O suit par osmose','#9ca3af',9]])}
+`;}
+
+function scResult(){return base(0.08,'34d399','Mucus fluide et hydrat\u00e9')+`
+${workingCh(200,215)}${workingCh(360,215)}${workingCh(520,215)}
+<g><g class="af">${cl(225,150,0.8)}</g><g class="af2">${cl(385,145,0.9)}</g><g class="af">${cl(545,155,0.7)}</g><g class="af2">${cl(230,310,0.7)}</g><g class="af">${cl(390,320,0.8)}</g><g class="af2">${cl(550,305,0.75)}</g></g>
+<g>${w(260,160,0.5)}${w(420,155,0.4)}${w(580,165,0.5)}</g>
+<g transform="translate(100,380)"><rect x="0" y="0" width="600" height="100" rx="16" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+<text x="110" y="30" text-anchor="middle" fill="#34d399" font-size="24" font-weight="800" font-family="Inter">+14%</text>
+<text x="110" y="50" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Inter">Fonction</text>
+<text x="110" y="64" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Inter">pulmonaire (VEMS)</text>
+<line x1="210" y1="15" x2="210" y2="80" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+<text x="310" y="30" text-anchor="middle" fill="#60a5fa" font-size="24" font-weight="800" font-family="Inter">-63%</text>
+<text x="310" y="50" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Inter">Exacerbations</text>
+<text x="310" y="64" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Inter">pulmonaires</text>
+<line x1="410" y1="15" x2="410" y2="80" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+<text x="510" y="30" text-anchor="middle" fill="#f472b6" font-size="24" font-weight="800" font-family="Inter">~90%</text>
+<text x="510" y="50" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Inter">Patients FK</text>
+<text x="510" y="64" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Inter">\u00e9ligibles</text>
+<text x="300" y="92" text-anchor="middle" fill="#64748b" font-size="9" font-family="Inter">Donn\u00e9es issues des essais cliniques de phase 3</text></g>
+<g transform="translate(300,130)"><text x="100" y="0" text-anchor="middle" fill="#34d399" font-size="14" font-weight="700" font-family="Inter">Triple th\u00e9rapie active</text>
+<text x="100" y="18" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter">ELX + TEZ corrigent \u2014 IVA potentialise</text></g>
+`;}
+
+init();
+</script>
+</body>
+</html>
